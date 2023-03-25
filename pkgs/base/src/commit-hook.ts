@@ -2,7 +2,7 @@ import { spawnSync } from "child_process";
 import { dir } from "dir";
 import { existsAsync, readAsync, removeAsync, writeAsync } from "fs-jetpack";
 import { spawn } from "utility/spawn";
-
+import { $ } from "execa";
 export const commitHook = async (args: string[]) => {
   const isMainRepo = async () => {
     const conf = await readAsync(dir.root(".git/config"), "utf8");
@@ -34,17 +34,8 @@ export const commitHook = async (args: string[]) => {
         await removeAsync(dir.root(".output/.commit"));
         await writeAsync(dir.root("pkgs/version.json"), { ts: Date.now() });
 
-        await new Promise((resolve) => {
-          spawn("git", ["add", "./pkgs/version.json"], {
-            cwd: dir.root(""),
-          }).onExit(resolve);
-        });
-
-        await new Promise((resolve) => {
-          spawn("git", ["commit", "--amend", "-C", "HEAD", "--no-verify"], {
-            cwd: dir.root(""),
-          }).onExit(resolve);
-        });
+        await $`git add .pkgs/version.json`;
+        await $`git commit --ammend -C HEAD --no-verify`;
       }
     }
 

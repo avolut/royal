@@ -130,6 +130,7 @@ importers:
       date-fns: 2.29.3
       dir: workspace:*
       esbuild: ^0.17.12
+      execa: ^7
       fflate: 0.7.4
       fs-jetpack: ^5.1.0
       hyper-express: ^6.5.8
@@ -149,6 +150,7 @@ importers:
       date-fns: 2.29.3
       dir: link:pkgs/dir
       esbuild: 0.17.12
+      execa: 7.1.1
       fflate: 0.7.4
       fs-jetpack: 5.1.0
       hyper-express: 6.5.8
