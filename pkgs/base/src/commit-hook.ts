@@ -21,6 +21,7 @@ export const commitHook = async (args: string[]) => {
       await writeAsync(dir.root(".output/.commit"), "");
     }
     process.exit(1);
+    return true;
   }
 
   if (args.includes("post-commit")) {
@@ -35,5 +36,7 @@ export const commitHook = async (args: string[]) => {
     }
 
     process.exit(1);
+    return true;
   }
+  return false;
 };

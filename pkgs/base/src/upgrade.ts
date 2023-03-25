@@ -5,10 +5,11 @@ import { readdirSync } from "fs";
 
 import {
   copyAsync,
-  dirAsync, existsAsync,
+  dirAsync,
+  existsAsync,
   moveAsync,
   removeAsync,
-  writeAsync
+  writeAsync,
 } from "fs-jetpack";
 import { join } from "path";
 
@@ -83,6 +84,7 @@ export const upgradeHook = async (args: string[]) => {
     } else {
       process.exit();
     }
+    process.exit(1);
     return true;
   }
 };
