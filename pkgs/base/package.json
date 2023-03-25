@@ -1,0 +1,35 @@
+{
+  "name": "base",
+  "main": "main.js",
+  "dependencies": {
+    "@parcel/watcher": "^2.1.0",
+    "@swc/core": "^1.3.41",
+    "bundler": "workspace:*",
+    "service-web": "workspace:*",
+    "chalk": "^5.2.0",
+    "date-fns": "2.29.3",
+    "dir": "workspace:*",
+    "esbuild": "^0.17.12",
+    "fflate": "0.7.4",
+    "fs-jetpack": "^5.1.0",
+    "hyper-express": "^6.5.8",
+    "zip-a-folder": "1.1.5",
+    "lodash.padend": "^4.6.1",
+    "pkg": "workspace:*",
+    "rpc": "workspace:*",
+    "process": "0.11.10",
+    "typescript": "^5",
+    "utility": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/lodash.padend": "^4.6.7",
+    "@types/node": "^18.15.5"
+  },
+  "external": [
+    "@parcel/watcher",
+    "hyper-express",
+    "typescript",
+    "@swc/core",
+    "@parcel/core"
+  ]
+}

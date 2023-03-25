@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "type": "command",
+      "name": "base",
+      "program": "node",
+      "args": [
+        "base"
+      ]
+    }
+  ],
+}

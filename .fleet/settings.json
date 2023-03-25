@@ -1,0 +1,20 @@
+{
+  "files.exclude": [
+    ".fleet",
+    ".git",
+    ".vscode",
+    "node_modules",
+    ".gitignore",
+    ".parcelrc",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "app/gen"
+  ],
+  "excluded": [
+    "node_modules",
+    "app/node_modules/service",
+    "node_modules/**",
+    "app/gen",
+    ".git"
+  ]
+}

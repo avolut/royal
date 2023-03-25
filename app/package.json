@@ -1,0 +1,10 @@
+{
+  "name": "app",
+  "main": "app.ts",
+  "dependencies": {
+    "service": "workspace:*"
+  },
+  "external": [
+    "hyper-express"
+  ]
+}

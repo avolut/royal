@@ -1,0 +1,39 @@
+{
+  "name": "web",
+  "version": "0.0.1",
+  "dependencies": {
+    "@fluentui/react-components": "9.18.3",
+    "@fluentui/react-icons": "workspace:^",
+    "date-fns": "2.29.3",
+    "dbgen": "../db/node_modules/.gen",
+    "immer": "9.0.19",
+    "lodash.capitalize": "4.2.1",
+    "lodash.get": "4.4.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-json-tree": "0.18.0",
+    "react-virtuoso": "4.1.0",
+    "scheduler": "^0.20.0",
+    "service-web": "workspace:*",
+    "web-init": "workspace:*",
+    "web-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@parcel/config-default": "2.8.3",
+    "@parcel/core": "2.8.3",
+    "@tinijs/parcel-reporter-copy-public": "^0.0.2",
+    "@types/lodash.get": "4.4.7",
+    "@types/react": "18.0.28",
+    "@types/react-dom": "18.0.11",
+    "autoprefixer": "10.4.14",
+    "parcel": "2.8.3",
+    "postcss": "8.4.21",
+    "process": "0.11.10",
+    "tailwindcss": "3.2.7"
+  },
+  "external": [
+    "hyper-express",
+    "live-directory",
+    "*"
+  ]
+}

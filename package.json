@@ -1,0 +1,19 @@
+{
+  "name": "royal-arc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "base": "node base devbase",
+    "pre-commit": "node base pre-commit",
+    "post-commit": "node base post-commit"
+  },
+  "pnpm": {
+    "overrides": {
+      "@fluentui/react-icons": "workspace:^"
+    }
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "process": "0.11.10"
+  }
+}
