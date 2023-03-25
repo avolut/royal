@@ -27,6 +27,7 @@ export const buildMainApp = async (app: { input: string; output: string }) => {
 (async () => {
   const { spawn } = require("child_process");
   const { existsSync } = require("fs");
+  const { join } = require("path");
   if (!existsSync(join(process.cwd(), "node_modules"))) {
     await new Promise((resolve) => {
       const pnpm = spawn("pnpm", ["i"], { stdio: "inherit", shell: true });
