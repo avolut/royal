@@ -52673,7 +52673,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
         enoent.hookChildProcess(spawned, parsed);
         return spawned;
       }
-      function spawnSync4(command, args2, options) {
+      function spawnSync3(command, args2, options) {
         const parsed = parse4(command, args2, options);
         const result = cp.spawnSync(parsed.command, parsed.args, parsed.options);
         result.error = result.error || enoent.verifyENOENTSync(result.status, parsed);
@@ -52681,7 +52681,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
       }
       module2.exports = spawn4;
       module2.exports.spawn = spawn4;
-      module2.exports.sync = spawnSync4;
+      module2.exports.sync = spawnSync3;
       module2.exports._parse = parse4;
       module2.exports._enoent = enoent;
     }
@@ -73887,7 +73887,9 @@ ${src}
             ctx.dispose();
           });
         }
-        baseGlobal.parcels.forEach((e) => e.kill(9));
+        if (baseGlobal.parcels) {
+          baseGlobal.parcels.forEach((e) => e.kill(9));
+        }
         if (bundler.runs) {
           for (const runs of Object.values(bundler.runs)) {
             runs.forEach((run) => __async(this, null, function* () {
@@ -73906,7 +73908,6 @@ ${src}
   };
 
   // pkgs/base/src/commit-hook.ts
-  var import_child_process4 = __require("child_process");
   var import_fs_jetpack16 = __toESM(require_main());
 
   // node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
@@ -75054,16 +75055,11 @@ ${error.message}` : execaMessage;
     if (args2.includes("pre-commit")) {
       if (yield isMainRepo()) {
         if (!(yield (0, import_fs_jetpack16.existsAsync)(dir.root(".husky/_/husky.sh")))) {
-          (0, import_child_process4.spawnSync)("pnpm husky install", { cwd: dir.root("") });
+          yield $`pnpm husky install`;
         }
         yield (0, import_fs_jetpack16.writeAsync)(dir.root(".output/.commit"), "");
       }
-      if (process.send) {
-        process.send("exit");
-      } else {
-        process.exit();
-      }
-      return true;
+      process.exit(1);
     }
     if (args2.includes("post-commit")) {
       if (yield isMainRepo()) {
@@ -75074,12 +75070,7 @@ ${error.message}` : execaMessage;
           yield $`git commit --ammend -C HEAD --no-verify`;
         }
       }
-      if (process.send) {
-        process.send("exit");
-      } else {
-        process.exit();
-      }
-      return true;
+      process.exit(1);
     }
   });
 
@@ -75160,7 +75151,7 @@ ${actions.map((e) => {
   });
 
   // pkgs/base/src/upgrade.ts
-  var import_child_process5 = __require("child_process");
+  var import_child_process4 = __require("child_process");
 
   // node_modules/.pnpm/fflate@0.7.4/node_modules/fflate/esm/index.mjs
   var import_module = __require("module");
@@ -75682,7 +75673,7 @@ ${actions.map((e) => {
           );
         }
       }
-      (0, import_child_process5.spawnSync)("pnpm", ["i"], { cwd: dir.root(""), stdio: "inherit" });
+      (0, import_child_process4.spawnSync)("pnpm", ["i"], { cwd: dir.root(""), stdio: "inherit" });
       if (process.send) {
         process.send("exit");
       } else {

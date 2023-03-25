@@ -12,8 +12,10 @@ export const attachCleanUp = () => {
         });
       }
 
-      baseGlobal.parcels.forEach((e) => e.kill(9));
-
+      if (baseGlobal.parcels) {
+        baseGlobal.parcels.forEach((e) => e.kill(9));
+      }
+      
       if (bundler.runs) {
         for (const runs of Object.values(bundler.runs)) {
           runs.forEach(async (run) => {

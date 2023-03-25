@@ -15,17 +15,12 @@ export const commitHook = async (args: string[]) => {
   if (args.includes("pre-commit")) {
     if (await isMainRepo()) {
       if (!(await existsAsync(dir.root(".husky/_/husky.sh")))) {
-        spawnSync("pnpm husky install", { cwd: dir.root("") });
+        await $`pnpm husky install`;
       }
 
       await writeAsync(dir.root(".output/.commit"), "");
     }
-    if (process.send) {
-      process.send("exit");
-    } else {
-      process.exit();
-    }
-    return true;
+    process.exit(1);
   }
 
   if (args.includes("post-commit")) {
@@ -39,11 +34,6 @@ export const commitHook = async (args: string[]) => {
       }
     }
 
-    if (process.send) {
-      process.send("exit");
-    } else {
-      process.exit();
-    }
-    return true;
+    process.exit(1);
   }
 };
