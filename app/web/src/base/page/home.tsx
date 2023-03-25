@@ -4,15 +4,16 @@ import { page } from "web-init";
 
 export default page({
   url: "/",
+  layout: "default",
   component: ({}) => {
     const local = useLocal({}, async () => {
       const res = await db.user.findFirst();
       console.log(res);
     });
-
+ 
     return (
       <>
-        Hello mantap
+        Hello 
         <br />
         <Button appearance="primary">Haloha</Button>
       </>

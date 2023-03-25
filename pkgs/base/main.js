@@ -72976,6 +72976,7 @@ ${webs.map((e) => `export { App as ${e} } from "../../${e}/src/app";`).join("\n"
 (async () => {
   const { spawn } = require("child_process");
   const { existsSync } = require("fs");
+  const { join } = require("path");
   if (!existsSync(join(process.cwd(), "node_modules"))) {
     await new Promise((resolve) => {
       const pnpm = spawn("pnpm", ["i"], { stdio: "inherit", shell: true });

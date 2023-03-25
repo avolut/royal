@@ -18,7 +18,6 @@ const layout: FC<{ children: any }> = ({ children }) => {
   return (
     <FluentProvider theme={webLightTheme} dir="ltr" className="border-2">
       <div className="bg-red-300">{children}</div>
-      <Button>Moko</Button>
     </FluentProvider>
   );
 };
