@@ -2,7 +2,7 @@ import { ChildProcess } from "child_process";
 import { RPCActionResult } from "rpc/src/types";
 import { rootAction as ServiceAction } from "../../service/src/action";
 import { SERVICE_TYPE } from "../../service/src/types";
-import { bundleService } from "./builder/service";
+import { buildServiceMain } from "./builder/service-main";
 import { prepareApp } from "./scaffold/app";
 
 export const baseGlobal = global as unknown as {
@@ -14,7 +14,7 @@ export const baseGlobal = global as unknown as {
 
 export const action = {
   rebuildService: async (name: SERVICE_TYPE) => {
-    return await bundleService(name, {
+    return await buildServiceMain(name, {
       watch: true,
     });
   },

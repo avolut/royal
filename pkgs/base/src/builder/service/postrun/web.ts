@@ -29,7 +29,6 @@ export const postRunWeb = async (name: string) => {
   }
 
   if (entry) {
-    await removeAsync(dir.root(`.output/app/${name}/public`));
     const args = [
       join(..."node_modules/parcel/lib/bin.js".split("/")),
       baseGlobal.mode === "dev" ? "watch" : "build",

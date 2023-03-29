@@ -15,9 +15,7 @@ export const srv = globalize({
     serverURL: "",
     cookieKey: "",
     rpc: {
-      db: null as unknown as RPCActionResult<typeof dbAction> & {
-        connected: boolean;
-      },
+      db: null as unknown as RPCActionResult<typeof dbAction> ,
     },
   },
   async init() {

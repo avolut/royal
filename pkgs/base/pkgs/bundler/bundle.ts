@@ -14,7 +14,7 @@ export const bundle = async (arg: {
   input: string;
   output: string;
   pkgjson?: { input: string; output?: string };
-  tstart?: number;
+  tstart?: number | false;
   watch?: boolean;
   format?: "iife" | "cjs";
   event?: {
@@ -39,8 +39,9 @@ export const bundle = async (arg: {
       let externalJson: any = { dependencies: {} };
       if (pkgjson) {
         let json = await readAsync(pkgjson.input, "json");
+        externalJson = await pkg.extractExternal(json);
+
         if (pkgjson.output) {
-          externalJson = await pkg.extractExternal(json);
           await writeAsync(pkgjson.output, externalJson);
         }
       }
@@ -82,7 +83,7 @@ export const bundle = async (arg: {
               });
               build.onEnd(async () => {
                 if (event && event.onEnd) {
-                  if (isRebuild) {
+                  if (isRebuild && tstart !== false) {
                     console.log(
                       `${padEnd(tag, 30, " ")} ${formatDuration(
                         performance.now() - t0
@@ -94,11 +95,13 @@ export const bundle = async (arg: {
                 }
 
                 if (!isRebuild) {
-                  console.log(
-                    `${padEnd(tag, 30, " ")} ${formatDuration(
-                      performance.now() - t0
-                    )}`
-                  );
+                  if (tstart !== false) {
+                    console.log(
+                      `${padEnd(tag, 30, " ")} ${formatDuration(
+                        performance.now() - t0
+                      )}`
+                    );
+                  }
                   isRebuild = true;
                   resolve(true);
                 }

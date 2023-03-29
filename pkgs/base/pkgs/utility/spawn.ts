@@ -12,6 +12,7 @@ export const spawn = (
     ? fork(file, args, {
         cwd: opt?.cwd,
         stdio: "inherit",
+        execArgv: ["--enable-source-maps"],
       })
     : nativeSpawn(file, args, {
         cwd: opt?.cwd,
@@ -30,7 +31,7 @@ export const spawn = (
     onMessage: (fn: (e: string) => any) => {
       callback.onMessage = fn;
     },
-    proc, 
+    proc,
     onExit: (
       fn: (e: { exitCode: number; signal: NodeJS.Signals | null }) => any
     ) => {

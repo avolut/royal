@@ -115,21 +115,21 @@ const connect = (name: string, action: RPCAction) => {
           if (typeof fn === "function") {
             let result = undefined as any;
             let error = undefined as any;
+
             try {
               result = await fn(...msg.args);
             } catch (e: any) {
               error = { msg: pe.render(e) };
             }
+            const final = JSON.stringify({
+              type: "action-result",
+              result,
+              error,
+              clientid: msg.clientid,
+              msgid: msg.msgid,
+            });
 
-            ws.send(
-              JSON.stringify({
-                type: "action-result",
-                result,
-                error,
-                clientid: msg.clientid,
-                msgid: msg.msgid,
-              })
-            );
+            ws.send(final);
           }
         }
       });
@@ -146,13 +146,19 @@ const connect = (name: string, action: RPCAction) => {
 };
 
 const createServer = async () => {
-  const server = new Server();
+  const MAX_BODY = Number.MAX_SAFE_INTEGER;
+  const server = new Server({
+    max_body_length: MAX_BODY,
+    auto_close: true,
+    trust_proxy: true,
+    fast_buffers: true,
+  });
   const conns = {} as Record<
     string,
     { server: null | WSServer; clients: Set<WSServer> }
   >;
 
-  server.ws("/create/:name", (ws) => {
+  server.ws("/create/:name", { max_payload_length: MAX_BODY }, (ws) => {
     ws.on("message", (raw) => {
       const msg = JSON.parse(raw) as
         | { type: "identify"; name: string }
@@ -186,44 +192,48 @@ const createServer = async () => {
       }
     });
   });
-  server.ws("/connect/:name", (ws: WSServer<{ clientId: string }>) => {
-    ws.on("message", (raw) => {
-      const msg = JSON.parse(raw) as
-        | { type: "identify"; name: string }
-        | ActionMsg;
+  server.ws(
+    "/connect/:name",
+    { max_payload_length: MAX_BODY },
+    (ws: WSServer<{ clientId: string }>) => {
+      ws.on("message", (raw) => {
+        const msg = JSON.parse(raw) as
+          | { type: "identify"; name: string }
+          | ActionMsg;
 
-      if (msg.type === "identify") {
-        if (!conns[msg.name]) {
-          // console.log(msg.name, "created on client");
+        if (msg.type === "identify") {
+          if (!conns[msg.name]) {
+            // console.log(msg.name, "created on client");
 
-          conns[msg.name] = {
-            server: null,
-            clients: new Set(),
-          };
-        }
-        ws.context.clientId = createId();
-        conns[msg.name].clients.add(ws);
-        ws.send(
-          JSON.stringify({
-            type: "connected",
-            serverConnected: !!conns[msg.name].server,
-          })
-        );
-      } else if (msg.type === "action") {
-        let name = "";
-        for (const [k, v] of Object.entries(conns)) {
-          if (v.clients.has(ws)) {
-            name = k;
+            conns[msg.name] = {
+              server: null,
+              clients: new Set(),
+            };
+          }
+          ws.context.clientId = createId();
+          conns[msg.name].clients.add(ws);
+          ws.send(
+            JSON.stringify({
+              type: "connected",
+              serverConnected: !!conns[msg.name].server,
+            })
+          );
+        } else if (msg.type === "action") {
+          let name = "";
+          for (const [k, v] of Object.entries(conns)) {
+            if (v.clients.has(ws)) {
+              name = k;
+            }
+          }
+          if (name && conns[name]) {
+            conns[name].server?.send(
+              JSON.stringify({ ...msg, clientid: ws.context.clientId })
+            );
           }
         }
-        if (name && conns[name]) {
-          conns[name].server?.send(
-            JSON.stringify({ ...msg, clientid: ws.context.clientId })
-          );
-        }
-      }
-    });
-  });
+      });
+    }
+  );
   await server.listen(config.port, "localhost");
   return server;
 };

@@ -185,7 +185,7 @@ export const pkg = {
 export const scanDir = async (paths: string[]) => {
   const pkgs: string[] = [];
   for (const path of paths) {
-    for await (const p of walk(path)) {
+    for await (const p of walkDir(path)) {
       if (p.endsWith("package.json")) {
         pkgs.push(p);
       }
@@ -195,12 +195,12 @@ export const scanDir = async (paths: string[]) => {
   return pkgs;
 };
 
-async function* walk(dir: string): any {
+export async function* walkDir(dir: string): any {
   for await (const d of await fs.promises.opendir(dir)) {
     const entry = path.join(dir, d.name);
     if (d.isDirectory()) {
       if (!entry.endsWith("node_modules")) {
-        yield* await walk(entry);
+        yield* await walkDir(entry);
       }
     } else if (d.isFile()) yield entry;
   }

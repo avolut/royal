@@ -10,7 +10,7 @@ import { zip } from "zip-a-folder";
 import { rootAction as RootAction } from "../../service/src/action";
 import { action, baseGlobal } from "./action";
 import { buildMainApp } from "./builder/build-app";
-import { bundleService } from "./builder/service";
+import { buildServiceMain } from "./builder/service-main";
 import { postRun } from "./builder/service/postrun";
 import { prepareBuild } from "./builder/service/prepare";
 import { attachCleanUp } from "./cleanup";
@@ -71,7 +71,7 @@ export const baseMain = async () => {
     await Promise.all(app.serviceNames.map(async (e) => await prepareBuild(e)));
     await Promise.all(
       app.serviceNames.map(
-        async (e) => await bundleService(e, { watch: false })
+        async (e) => await buildServiceMain(e, { watch: false })
       )
     );
     await Promise.all(app.serviceNames.map(async (e) => await postRun(e)));
@@ -94,7 +94,7 @@ export const baseMain = async () => {
     await buildMainApp(app);
     await Promise.all(app.serviceNames.map(async (e) => await prepareBuild(e)));
     await Promise.all(
-      app.serviceNames.map(async (e) => await bundleService(e, { watch: true }))
+      app.serviceNames.map(async (e) => await buildServiceMain(e, { watch: true }))
     );
 
     versionCheck({ timeout: 3000 });

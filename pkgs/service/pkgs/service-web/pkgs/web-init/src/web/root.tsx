@@ -1,6 +1,6 @@
 import { FC, lazy, ReactNode, Suspense } from "react";
 import { GlobalContext, useLocal } from "web-utils";
-import { PageResponse } from "../types";
+import { g, PageResponse } from "../types";
 import { ErrorBoundary } from "./error-boundary";
 import { PromisedComponent } from "./page";
 
@@ -36,11 +36,7 @@ export const Root: FC<{
     w.pathname = res.pathname;
   }
 
-  const g = (isSSR ? global : window) as unknown as {
-    router: typeof router;
-  };
-
-  let page = __PAGES__["index"];
+  let page = g.__PAGES__["index"];
 
   let found = g.router.lookup(res.pathname);
   if (!found) {
@@ -52,8 +48,8 @@ export const Root: FC<{
   }
 
   if (found) {
-    if (found.name && __PAGES__[found.name]) {
-      page = __PAGES__[found.name];
+    if (found.name && g.__PAGES__[found.name]) {
+      page = g.__PAGES__[found.name];
     }
     res.params = found.params || {};
     if (!isSSR) {
@@ -62,7 +58,7 @@ export const Root: FC<{
   }
 
   if (!isSSR) {
-    __CURPAGE__ = page;
+    g.__CURPAGE__ = page;
   }
 
   if (page) {
@@ -76,8 +72,8 @@ export const Root: FC<{
     }
 
     if (!local.Layout && page.layout) {
-      if (__LAYOUTS__ && __LAYOUTS__[page.layout]) {
-        local.Layout = __LAYOUTS__[page.layout] as any;
+      if (g.__LAYOUTS__ && g.__LAYOUTS__[page.layout]) {
+        local.Layout = g.__LAYOUTS__[page.layout] as any;
       }
     }
 
@@ -104,6 +100,7 @@ export const Root: FC<{
       }
     }
   }
+
 
   return (
     <GlobalContext.Provider

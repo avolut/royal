@@ -6,17 +6,20 @@ import { SERVICE_NAME } from "../../../src/types";
 import { srv } from "./glbsrv";
 import { server } from "./server";
 import { srvAction } from "./action";
+import { WSRouteHandler } from "hyper-express";
 
 export const createAPIServer = async ({
   name,
   port,
   serverURL,
   cookieKey,
+  ws,
 }: {
   name: SERVICE_NAME;
   port: number;
   serverURL?: string;
   cookieKey: string;
+  ws?: Record<string, WSRouteHandler>;
 }) => {
   return await createService({
     name,
@@ -39,6 +42,7 @@ export const createAPIServer = async ({
         port: srv.port,
         name: srv.name,
         cookieKey: srv.cookieKey,
+        ws,
       });
 
       if (typeof running === "string") {

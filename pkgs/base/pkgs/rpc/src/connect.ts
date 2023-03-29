@@ -56,11 +56,21 @@ export const connectRPC = async <T extends RPCAction>(
             const onmsg = (raw: string) => {
               if (ws) {
                 const msg = JSON.parse(raw) as ActionResult;
+
                 if (msg.msgid === msgid) {
                   ws.off("message", onmsg);
-
                   if (msg.type === "action-result") {
-                    if (!msg.error) {
+                    if (msg.result === "null") {
+                      msg.result = null;
+                    } else if (msg.result === "undefined") {
+                      msg.result = undefined;
+                    } else if (msg.result === "0") {
+                      msg.result = 0;
+                    }
+
+                    if (!!msg.error && !!msg.result) {
+                      resolve(msg.result);
+                    } else if (!msg.error) {
                       resolve(msg.result);
                     } else {
                       process.stdout.write(msg.error.msg);

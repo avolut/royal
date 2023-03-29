@@ -19,7 +19,8 @@ export const generateUploadPath = (
   );
   const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
 
-  const filename = file.name + "-" + uniqueSuffix + extname(file.filename);
+  const filename =
+    file.name.split(".")[0].replace(/[\W_]+/g,"") + "-" + uniqueSuffix + extname(file.filename);
 
   let mode = "_file";
   if (file.type.includes("image")) {

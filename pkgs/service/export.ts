@@ -12,6 +12,7 @@ import { svc } from "./src/global";
 import { SERVICE_NAME } from "./src/types";
 
 export * from "./src/create-service";
+export * from "./src/service-module";
 
 export const initialize = async (fn: () => Promise<void>) => {
   attachSpawnCleanup("root");
@@ -61,7 +62,6 @@ const manageProcess = (name: SERVICE_NAME, pid?: string) => {
 const executeAction = (arg: { name: string; pid?: string; entry: string }) => {
   const { name, entry } = arg;
   let pid = arg.pid || name;
-  const tag = `${name}.${pid}`;
   const def = svc.definitions[name];
 
   if (def) {
@@ -92,18 +92,20 @@ const executeAction = (arg: { name: string; pid?: string; entry: string }) => {
       });
     }
   } else {
-    console.log(svc.definitions);
-
     console.error(
       `Failed to call ${chalk.magenta(
         `service.${name}.${entry}`
-      )}\n Service ${chalk.green(name)} not started yet.`
+      )}\n Service ${chalk.green(
+        name
+      )} not started yet. \n\n Please put your service call inside onServiceReady(() => {})`
     );
   }
 };
 
 export const service = new DeepProxy({}, ({ PROXY, path, key }) => {
   return PROXY({}, ({ path, key, PROXY }) => {
+    if (key === "then") return PROXY({});
+
     if (key === "_process" || key === "_all") {
       return manageProcess(path[0] as any);
     }
@@ -116,7 +118,7 @@ export const service = new DeepProxy({}, ({ PROXY, path, key }) => {
             return manageProcess(path[0] as any, key as string);
           }
 
-          return await executeAction({
+          return executeAction({
             name: path[0],
             pid: pid,
             entry: key as string,

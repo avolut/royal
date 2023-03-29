@@ -23,7 +23,18 @@ export const defineWindow = async () => {
   w.Fragment = React.Fragment;
 
   w.cx = (...classNames: any[]) => {
-    return classNames.filter((e) => e).join(" ");
+    const result: string[] = [];
+
+    classNames
+      .filter((e) => !!e)
+      .forEach((e) => {
+        if (Array.isArray(e)) {
+          for (const f of e) {
+            result.push(f);
+          }
+        } else result.push(e);
+      });
+    return result.join(' ');
   };
 
   const apiEntry = await import(

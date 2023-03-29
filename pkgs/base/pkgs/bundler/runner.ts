@@ -22,6 +22,8 @@ export const runner = {
         await this.stop(path);
         await runner.run(data.arg);
       });
+    } else if (bundler.lastRunArgs[path]) {
+      await runner.run(bundler.lastRunArgs[path]);
     } else {
       return false;
     }
@@ -65,6 +67,11 @@ export const runner = {
       if (!bundler.runs[path]) {
         bundler.runs[path] = new Set();
       }
+      if (!bundler.lastRunArgs) {
+        bundler.lastRunArgs = {};
+      }
+
+      bundler.lastRunArgs[path] = arg;
 
       const run = await spawn(path, args || [], {
         cwd,
@@ -75,10 +82,10 @@ export const runner = {
       run.data = {
         arg,
       };
- 
+
       run.onExit(async (e) => {
         if (onStop) await onStop(e);
- 
+
         bundler.runs[path].delete(run);
         if (bundler.runs[path].size === 0) delete bundler.runs[path];
       });

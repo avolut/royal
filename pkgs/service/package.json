@@ -11,6 +11,7 @@
     "dir": "workspace:*",
     "utility": "workspace:*",
     "pkg": "workspace:*",
+    "web-init": "workspace:*",
     "bundler": "workspace:^",
     "catch-exit": "1.2.2",
     "@qiwi/deep-proxy": "2.0.3"

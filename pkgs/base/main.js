@@ -2546,7 +2546,7 @@
         }
         return false;
       };
-      var existsAsync9 = (path4) => {
+      var existsAsync10 = (path4) => {
         return new Promise((resolve, reject) => {
           fs2.stat(path4).then((stat5) => {
             if (stat5.isDirectory()) {
@@ -2567,7 +2567,7 @@
       };
       exports2.validateInput = validateInput;
       exports2.sync = existsSync5;
-      exports2.async = existsAsync9;
+      exports2.async = existsAsync10;
     }
   });
 
@@ -70146,7 +70146,8 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
   var spawn = (file, args2, opt) => {
     let proc = opt?.ipc ? (0, import_child_process.fork)(file, args2, {
       cwd: opt?.cwd,
-      stdio: "inherit"
+      stdio: "inherit",
+      execArgv: ["--enable-source-maps"]
     }) : (0, import_child_process.spawn)(file, args2, {
       cwd: opt?.cwd,
       stdio: opt?.silent === true ? "ignore" : "inherit",
@@ -70228,6 +70229,8 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
           await this.stop(path4);
           await runner.run(data.arg);
         });
+      } else if (bundler.lastRunArgs[path4]) {
+        await runner.run(bundler.lastRunArgs[path4]);
       } else {
         return false;
       }
@@ -70259,6 +70262,10 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
         if (!bundler.runs[path4]) {
           bundler.runs[path4] = /* @__PURE__ */ new Set();
         }
+        if (!bundler.lastRunArgs) {
+          bundler.lastRunArgs = {};
+        }
+        bundler.lastRunArgs[path4] = arg;
         const run = await spawn(path4, args2 || [], {
           cwd: cwd2,
           ipc: isCommand ? false : true,
@@ -70818,7 +70825,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
   );
 
   // pkgs/base/src/main.ts
-  var import_fs_jetpack23 = __toESM(require_main());
+  var import_fs_jetpack24 = __toESM(require_main());
   var import_lodash6 = __toESM(require_lodash());
   var import_path18 = __require("path");
 
@@ -71036,7 +71043,7 @@ ${import_chalk2.default.magenta("Installing")} deps:
   var scanDir = async (paths) => {
     const pkgs = [];
     for (const path4 of paths) {
-      for await (const p of walk(path4)) {
+      for await (const p of walkDir(path4)) {
         if (p.endsWith("package.json")) {
           pkgs.push(p);
         }
@@ -71046,12 +71053,12 @@ ${import_chalk2.default.magenta("Installing")} deps:
     }
     return pkgs;
   };
-  async function* walk(dir2) {
+  async function* walkDir(dir2) {
     for await (const d of await import_fs3.default.promises.opendir(dir2)) {
       const entry = import_path3.default.join(dir2, d.name);
       if (d.isDirectory()) {
         if (!entry.endsWith("node_modules")) {
-          yield* await walk(entry);
+          yield* await walkDir(entry);
         }
       } else if (d.isFile())
         yield entry;
@@ -71238,7 +71245,16 @@ ${import_chalk2.default.magenta("Installing")} deps:
                   if (msg.msgid === msgid) {
                     ws.off("message", onmsg);
                     if (msg.type === "action-result") {
-                      if (!msg.error) {
+                      if (msg.result === "null") {
+                        msg.result = null;
+                      } else if (msg.result === "undefined") {
+                        msg.result = void 0;
+                      } else if (msg.result === "0") {
+                        msg.result = 0;
+                      }
+                      if (!!msg.error && !!msg.result) {
+                        resolve(msg.result);
+                      } else if (!msg.error) {
                         resolve(msg.result);
                       } else {
                         process.stdout.write(msg.error.msg);
@@ -71515,15 +71531,14 @@ Make sure to kill running instance before starting.
               } catch (e) {
                 error = { msg: pe.render(e) };
               }
-              ws.send(
-                JSON.stringify({
-                  type: "action-result",
-                  result,
-                  error,
-                  clientid: msg.clientid,
-                  msgid: msg.msgid
-                })
-              );
+              const final = JSON.stringify({
+                type: "action-result",
+                result,
+                error,
+                clientid: msg.clientid,
+                msgid: msg.msgid
+              });
+              ws.send(final);
             }
           }
         }));
@@ -71538,9 +71553,15 @@ Make sure to kill running instance before starting.
     });
   };
   var createServer = () => __async(void 0, null, function* () {
-    const server = new import_hyper_express.Server();
+    const MAX_BODY = Number.MAX_SAFE_INTEGER;
+    const server = new import_hyper_express.Server({
+      max_body_length: MAX_BODY,
+      auto_close: true,
+      trust_proxy: true,
+      fast_buffers: true
+    });
     const conns = {};
-    server.ws("/create/:name", (ws) => {
+    server.ws("/create/:name", { max_payload_length: MAX_BODY }, (ws) => {
       ws.on("message", (raw) => {
         const msg = JSON.parse(raw);
         if (msg.type === "identify") {
@@ -71570,40 +71591,44 @@ Make sure to kill running instance before starting.
         }
       });
     });
-    server.ws("/connect/:name", (ws) => {
-      ws.on("message", (raw) => {
-        var _a2;
-        const msg = JSON.parse(raw);
-        if (msg.type === "identify") {
-          if (!conns[msg.name]) {
-            conns[msg.name] = {
-              server: null,
-              clients: /* @__PURE__ */ new Set()
-            };
-          }
-          ws.context.clientId = (0, import_cuid22.createId)();
-          conns[msg.name].clients.add(ws);
-          ws.send(
-            JSON.stringify({
-              type: "connected",
-              serverConnected: !!conns[msg.name].server
-            })
-          );
-        } else if (msg.type === "action") {
-          let name = "";
-          for (const [k, v] of Object.entries(conns)) {
-            if (v.clients.has(ws)) {
-              name = k;
+    server.ws(
+      "/connect/:name",
+      { max_payload_length: MAX_BODY },
+      (ws) => {
+        ws.on("message", (raw) => {
+          var _a2;
+          const msg = JSON.parse(raw);
+          if (msg.type === "identify") {
+            if (!conns[msg.name]) {
+              conns[msg.name] = {
+                server: null,
+                clients: /* @__PURE__ */ new Set()
+              };
+            }
+            ws.context.clientId = (0, import_cuid22.createId)();
+            conns[msg.name].clients.add(ws);
+            ws.send(
+              JSON.stringify({
+                type: "connected",
+                serverConnected: !!conns[msg.name].server
+              })
+            );
+          } else if (msg.type === "action") {
+            let name = "";
+            for (const [k, v] of Object.entries(conns)) {
+              if (v.clients.has(ws)) {
+                name = k;
+              }
+            }
+            if (name && conns[name]) {
+              (_a2 = conns[name].server) == null ? void 0 : _a2.send(
+                JSON.stringify(__spreadProps(__spreadValues({}, msg), { clientid: ws.context.clientId }))
+              );
             }
           }
-          if (name && conns[name]) {
-            (_a2 = conns[name].server) == null ? void 0 : _a2.send(
-              JSON.stringify(__spreadProps(__spreadValues({}, msg), { clientid: ws.context.clientId }))
-            );
-          }
-        }
-      });
-    });
+        });
+      }
+    );
     yield server.listen(config.port, "localhost");
     return server;
   });
@@ -71633,8 +71658,8 @@ Make sure to kill running instance before starting.
         let externalJson = { dependencies: {} };
         if (pkgjson) {
           let json = await (0, import_fs_jetpack3.readAsync)(pkgjson.input, "json");
+          externalJson = await pkg.extractExternal(json);
           if (pkgjson.output) {
-            externalJson = await pkg.extractExternal(json);
             await (0, import_fs_jetpack3.writeAsync)(pkgjson.output, externalJson);
           }
         }
@@ -71674,7 +71699,7 @@ Make sure to kill running instance before starting.
                 });
                 build.onEnd(async () => {
                   if (event && event.onEnd) {
-                    if (isRebuild) {
+                    if (isRebuild && tstart !== false) {
                       console.log(
                         `${(0, import_lodash3.default)(tag, 30, " ")} ${formatDuration(
                           performance.now() - t0
@@ -71684,11 +71709,13 @@ Make sure to kill running instance before starting.
                     await event.onEnd({ isRebuild });
                   }
                   if (!isRebuild) {
-                    console.log(
-                      `${(0, import_lodash3.default)(tag, 30, " ")} ${formatDuration(
-                        performance.now() - t0
-                      )}`
-                    );
+                    if (tstart !== false) {
+                      console.log(
+                        `${(0, import_lodash3.default)(tag, 30, " ")} ${formatDuration(
+                          performance.now() - t0
+                        )}`
+                      );
+                    }
                     isRebuild = true;
                     resolve(true);
                   }
@@ -71784,11 +71811,37 @@ Make sure to kill running instance before starting.
     });
   };
 
+  // pkgs/base/src/builder/service-module.ts
+  var import_fs_jetpack4 = __toESM(require_main());
+  var buildServiceModule = (name, arg) => __async(void 0, null, function* () {
+    if (yield (0, import_fs_jetpack4.existsAsync)(dir.root(`app/${name}/module.ts`))) {
+      let _a2;
+      yield bundle({
+        input: dir.root(`app/${name}/module.ts`),
+        output: dir.root(`.output/app/${name}/module.js`),
+        tstart: false,
+        watch: arg.watch,
+        pkgjson: {
+          input: dir.root(`app/${name}/package.json`)
+        },
+        event: arg.watch ? {
+          onEnd(_0) {
+            return __async(this, arguments, function* ({ isRebuild }) {
+              if (isRebuild) {
+                console.log(`${source_default.magenta("Reload")}  ${source_default.green(name)}`);
+              }
+            });
+          }
+        } : void 0
+      });
+    }
+  });
+
   // pkgs/base/src/builder/service/prepare/db.ts
-  var import_fs_jetpack7 = __toESM(require_main());
+  var import_fs_jetpack8 = __toESM(require_main());
 
   // pkgs/service/pkgs/service-db/src/create-db.ts
-  var import_fs_jetpack6 = __toESM(require_main());
+  var import_fs_jetpack7 = __toESM(require_main());
   var import_lodash5 = __toESM(require_lodash());
 
   // pkgs/service/export.ts
@@ -71804,9 +71857,9 @@ Make sure to kill running instance before starting.
       root: null,
       definitions: {}
     },
-    init: async (g2) => {
-      g2.root = await connectRPC("root");
-    }
+    init: (g2) => __async(void 0, null, function* () {
+      g2.root = yield connectRPC("root");
+    })
   });
 
   // pkgs/service/export.ts
@@ -71829,7 +71882,6 @@ Make sure to kill running instance before starting.
   var executeAction = (arg) => {
     const { name, entry } = arg;
     let pid = arg.pid || name;
-    const tag = `${name}.${pid}`;
     const def = svc.definitions[name];
     if (def) {
       if (def[entry] === "function") {
@@ -71858,17 +71910,22 @@ Make sure to kill running instance before starting.
         });
       }
     } else {
-      console.log(svc.definitions);
       console.error(
         `Failed to call ${source_default.magenta(
           `service.${name}.${entry}`
         )}
- Service ${source_default.green(name)} not started yet.`
+ Service ${source_default.green(
+          name
+        )} not started yet. 
+
+ Please put your service call inside onServiceReady(() => {})`
       );
     }
   };
   var service = new DeepProxy({}, ({ PROXY, path: path4, key }) => {
     return PROXY({}, ({ path: path5, key: key2, PROXY: PROXY2 }) => {
+      if (key2 === "then")
+        return PROXY2({});
       if (key2 === "_process" || key2 === "_all") {
         return manageProcess(path5[0]);
       }
@@ -71879,7 +71936,7 @@ Make sure to kill running instance before starting.
             if (key4 === "_process") {
               return manageProcess(path6[0], key4);
             }
-            return await executeAction({
+            return executeAction({
               name: path6[0],
               pid,
               entry: key4
@@ -71893,24 +71950,24 @@ Make sure to kill running instance before starting.
 
   // pkgs/service/pkgs/service-db/src/ensure-prisma.ts
   var import_prisma_ast = __toESM(require_dist2());
-  var import_fs_jetpack4 = __toESM(require_main());
+  var import_fs_jetpack5 = __toESM(require_main());
   var import_path7 = __require("path");
-  var fixPrismaName = async (path4) => {
+  var fixPrismaName = (path4) => __async(void 0, null, function* () {
     try {
-      const pkg2 = await (0, import_fs_jetpack4.readAsync)(path4, "json");
+      const pkg2 = yield (0, import_fs_jetpack5.readAsync)(path4, "json");
       if (pkg2 && pkg2.name) {
         pkg2.name = pkg2.name.replace(/[\W_]+/g, "_");
-        await (0, import_fs_jetpack4.writeAsync)(path4, pkg2);
+        yield (0, import_fs_jetpack5.writeAsync)(path4, pkg2);
       }
     } catch (e) {
     }
-  };
-  var ensurePrisma = async (name) => {
+  });
+  var ensurePrisma = (name) => __async(void 0, null, function* () {
     const prismaPath = dir.root(`app/${name}/prisma/schema.prisma`);
     let dburl = "";
-    if (!await (0, import_fs_jetpack4.existsAsync)(prismaPath)) {
-      await (0, import_fs_jetpack4.dirAsync)((0, import_path7.dirname)(prismaPath));
-      await (0, import_fs_jetpack4.writeAsync)(
+    if (!(yield (0, import_fs_jetpack5.existsAsync)(prismaPath))) {
+      yield (0, import_fs_jetpack5.dirAsync)((0, import_path7.dirname)(prismaPath));
+      yield (0, import_fs_jetpack5.writeAsync)(
         prismaPath,
         `generator client {
   provider = "prisma-client-js"
@@ -71923,7 +71980,7 @@ datasource db {
 }`
       );
     }
-    const schemaRaw = await (0, import_fs_jetpack4.readAsync)(prismaPath, "utf8");
+    const schemaRaw = yield (0, import_fs_jetpack5.readAsync)(prismaPath, "utf8");
     if (schemaRaw) {
       const schema = (0, import_prisma_ast.getSchema)(schemaRaw);
       let hasModel = false;
@@ -71953,37 +72010,37 @@ datasource db {
         }
       }
       const newSchemaRaw = (0, import_prisma_ast.printSchema)(schema).trim();
-      await (0, import_fs_jetpack4.writeAsync)(prismaPath, newSchemaRaw);
+      yield (0, import_fs_jetpack5.writeAsync)(prismaPath, newSchemaRaw);
       if (newSchemaRaw !== schemaRaw.trim() || !hasModel) {
         return { generated: false, pulled: false, dburl };
       }
       let prismaOutputSame = false;
-      if (await (0, import_fs_jetpack4.existsAsync)(dir.root(`.output/app/${name}/prisma/schema.prisma`))) {
+      if (yield (0, import_fs_jetpack5.existsAsync)(dir.root(`.output/app/${name}/prisma/schema.prisma`))) {
         prismaOutputSame = true;
-        const outputSchema = await (0, import_fs_jetpack4.readAsync)(
+        const outputSchema = yield (0, import_fs_jetpack5.readAsync)(
           dir.root(`.output/app/${name}/prisma/schema.prisma`)
         );
-        if (newSchemaRaw.trim() !== outputSchema?.trim()) {
+        if (newSchemaRaw.trim() !== (outputSchema == null ? void 0 : outputSchema.trim())) {
           prismaOutputSame = false;
         }
       }
-      await (0, import_fs_jetpack4.copyAsync)(
+      yield (0, import_fs_jetpack5.copyAsync)(
         dir.root(`app/${name}/prisma`),
         dir.root(`.output/app/${name}/prisma`),
         {
           overwrite: true
         }
       );
-      if (!prismaOutputSame || !await (0, import_fs_jetpack4.existsAsync)(dir.root(`app/${name}/node_modules/.gen`))) {
+      if (!prismaOutputSame || !(yield (0, import_fs_jetpack5.existsAsync)(dir.root(`app/${name}/node_modules/.gen`)))) {
         return { generated: false, pulled: true, dburl };
       }
     }
     return { generated: true, pulled: true, dburl };
-  };
+  });
 
   // pkgs/service/pkgs/service-db/src/parse-prisma.ts
   var import_prisma_ast2 = __toESM(require_dist2());
-  var import_fs_jetpack5 = __toESM(require_main());
+  var import_fs_jetpack6 = __toESM(require_main());
 
   // pkgs/base/src/builder/service/prepare/db.ts
   var prepareDB = (name, changes) => __async(void 0, null, function* () {
@@ -72000,19 +72057,19 @@ datasource db {
         yield fixPrismaName(
           dir.root(`app/${name}/node_modules/.gen/package.json`)
         );
-        yield (0, import_fs_jetpack7.removeAsync)(dir.root(`.output/app/${name}/node_modules/.gen`));
+        yield (0, import_fs_jetpack8.removeAsync)(dir.root(`.output/app/${name}/node_modules/.gen`));
       }
     }
     return { shouldRestart: true };
   });
 
   // pkgs/base/src/builder/service/prepare/srv.ts
-  var import_fs_jetpack9 = __toESM(require_main());
+  var import_fs_jetpack10 = __toESM(require_main());
   var import_promises2 = __require("fs/promises");
   var import_path10 = __require("path");
 
   // pkgs/base/src/scaffold/srv/api.ts
-  var import_fs_jetpack8 = __toESM(require_main());
+  var import_fs_jetpack9 = __toESM(require_main());
   var import_path9 = __require("path");
 
   // pkgs/base/src/scaffold/parser/traverse.ts
@@ -73351,7 +73408,7 @@ datasource db {
   // pkgs/base/src/scaffold/parser/utils.ts
   var import_promises = __require("fs/promises");
   var import_path8 = __require("path");
-  var walkDir = function(directory) {
+  var walkDir2 = function(directory) {
     return __async(this, null, function* () {
       let fileList = [];
       try {
@@ -73359,7 +73416,7 @@ datasource db {
         for (const file of files) {
           const p = (0, import_path8.join)(directory, file);
           if ((yield (0, import_promises.stat)(p)).isDirectory()) {
-            fileList = [...fileList, ...yield walkDir(p)];
+            fileList = [...fileList, ...yield walkDir2(p)];
           } else {
             fileList.push(p);
           }
@@ -73372,7 +73429,7 @@ datasource db {
 
   // pkgs/base/src/scaffold/srv/api.ts
   var scan = (path4) => __async(void 0, null, function* () {
-    const dirs = (yield walkDir(path4)).filter(
+    const dirs = (yield walkDir2(path4)).filter(
       (e) => e.endsWith(".ts") || e.endsWith(".tsx")
     );
     return dirs;
@@ -73386,7 +73443,7 @@ datasource db {
       file: filePath,
       params: []
     };
-    const src = yield (0, import_fs_jetpack8.readAsync)(filePath, "utf8");
+    const src = yield (0, import_fs_jetpack9.readAsync)(filePath, "utf8");
     if (src) {
       yield traverse(src, (parent) => ({
         visitObjectExpression(n) {
@@ -73425,7 +73482,7 @@ datasource db {
   handler: import(${importPath})
 }`;
     };
-    yield (0, import_fs_jetpack8.writeAsync)(
+    yield (0, import_fs_jetpack9.writeAsync)(
       dir.root(`app/gen/srv/api/${name}-args.ts`),
       parsed.map((e) => {
         let page = (0, import_path9.basename)(e.file);
@@ -73436,18 +73493,18 @@ datasource db {
 }`;
       }).join("\n")
     );
-    yield (0, import_fs_jetpack8.writeAsync)(
+    yield (0, import_fs_jetpack9.writeAsync)(
       dir.root(`app/gen/srv/api/${name}.ts`),
       parsed.map(content()).join("\n")
     );
   });
   var generateAPIEntry = (dirs) => __async(void 0, null, function* () {
-    yield (0, import_fs_jetpack8.removeAsync)(dir.root(`app/gen/srv/api`));
-    yield (0, import_fs_jetpack8.writeAsync)(
+    yield (0, import_fs_jetpack9.removeAsync)(dir.root(`app/gen/srv/api`));
+    yield (0, import_fs_jetpack9.writeAsync)(
       dir.root(`app/gen/srv/api/entry.ts`),
       dirs.map((e) => `export * as ${e} from "./${e}"`).join("\n")
     );
-    yield (0, import_fs_jetpack8.writeAsync)(
+    yield (0, import_fs_jetpack9.writeAsync)(
       dir.root(`app/gen/srv/api/entry-args.ts`),
       dirs.map((e) => `export * as ${e} from "./${e}-args"`).join("\n")
     );
@@ -73468,7 +73525,7 @@ datasource db {
             const routeName = (0, import_path10.basename)(
               e.substring(0, e.length - (0, import_path10.extname)(e).length)
             );
-            yield (0, import_fs_jetpack9.writeAsync)(
+            yield (0, import_fs_jetpack10.writeAsync)(
               e,
               `import { apiContext } from "service-srv";
 export const _ = {
@@ -73491,10 +73548,10 @@ export const _ = {
   });
 
   // pkgs/base/src/scaffold/web/layout.ts
-  var import_fs_jetpack10 = __toESM(require_main());
+  var import_fs_jetpack11 = __toESM(require_main());
   var import_path11 = __require("path");
   var scan2 = (path4) => __async(void 0, null, function* () {
-    const dirs = (yield walkDir(path4)).filter(
+    const dirs = (yield walkDir2(path4)).filter(
       (e) => e.endsWith(".ts") || e.endsWith(".tsx")
     );
     return dirs;
@@ -73505,7 +73562,7 @@ export const _ = {
   });
   var generateLayout = (name, path4) => __async(void 0, null, function* () {
     const parsed = yield Promise.all((yield scan2(path4)).map(parse2));
-    yield (0, import_fs_jetpack10.writeAsync)(
+    yield (0, import_fs_jetpack11.writeAsync)(
       dir.root(`app/gen/web/layout/${name}.ts`),
       `export default {
 ${parsed.map((e) => {
@@ -73521,25 +73578,25 @@ ${parsed.map((e) => {
     );
   });
   var generateLayoutEntry = (dirs) => __async(void 0, null, function* () {
-    yield (0, import_fs_jetpack10.removeAsync)(dir.root(`app/gen/web/layout`));
-    yield (0, import_fs_jetpack10.writeAsync)(
+    yield (0, import_fs_jetpack11.removeAsync)(dir.root(`app/gen/web/layout`));
+    yield (0, import_fs_jetpack11.writeAsync)(
       dir.root(`app/gen/web/layout/entry.ts`),
       dirs.map((e) => `export * as ${e} from "./${e}"`).join("\n")
     );
   });
 
   // pkgs/base/src/scaffold/web/page.ts
-  var import_fs_jetpack11 = __toESM(require_main());
+  var import_fs_jetpack12 = __toESM(require_main());
   var import_path12 = __require("path");
   var scan3 = (path4) => __async(void 0, null, function* () {
-    const dirs = (yield walkDir(path4)).filter(
+    const dirs = (yield walkDir2(path4)).filter(
       (e) => e.endsWith(".ts") || e.endsWith(".tsx")
     );
     return dirs;
   });
   var parsePage = (filePath) => __async(void 0, null, function* () {
     const result = { url: "", ssr: false, layout: "", file: filePath };
-    const src = yield (0, import_fs_jetpack11.readAsync)(filePath, "utf8");
+    const src = yield (0, import_fs_jetpack12.readAsync)(filePath, "utf8");
     if (src) {
       yield traverse(src, (parent) => ({
         visitObjectExpression(n) {
@@ -73580,39 +73637,39 @@ ${parsed.map((e) => {
   ${!ssr || e.ssr && ssr ? `component: () => import(${importPath})` : ""}
 }`;
     };
-    yield (0, import_fs_jetpack11.writeAsync)(
+    yield (0, import_fs_jetpack12.writeAsync)(
       dir.root(`app/gen/web/page/${name}.ts`),
       parsed.map(content(false)).join("\n")
     );
-    yield (0, import_fs_jetpack11.writeAsync)(
+    yield (0, import_fs_jetpack12.writeAsync)(
       dir.root(`app/gen/web/page/${name}-ssr.ts`),
       parsed.map(content(true)).join("\n")
     );
   });
   var generatePageEntry = (dirs) => __async(void 0, null, function* () {
-    yield (0, import_fs_jetpack11.removeAsync)(dir.root(`app/gen/web/page`));
-    yield (0, import_fs_jetpack11.writeAsync)(
+    yield (0, import_fs_jetpack12.removeAsync)(dir.root(`app/gen/web/page`));
+    yield (0, import_fs_jetpack12.writeAsync)(
       dir.root(`app/gen/web/page/entry.ts`),
       dirs.map((e) => `export * as ${e} from "./${e}"`).join("\n")
     );
-    yield (0, import_fs_jetpack11.writeAsync)(
+    yield (0, import_fs_jetpack12.writeAsync)(
       dir.root(`app/gen/web/page/entry-ssr.ts`),
       dirs.map((e) => `export * as ${e} from "./${e}-ssr"`).join("\n")
     );
   });
 
   // pkgs/base/src/scaffold/web/ssr.ts
-  var import_fs_jetpack12 = __toESM(require_main());
+  var import_fs_jetpack13 = __toESM(require_main());
   var import_path13 = __require("path");
   var scan4 = (path4) => __async(void 0, null, function* () {
-    const dirs = (yield walkDir(path4)).filter(
+    const dirs = (yield walkDir2(path4)).filter(
       (e) => e.endsWith(".ts") || e.endsWith(".tsx")
     );
     return dirs;
   });
   var parse3 = (filePath) => __async(void 0, null, function* () {
     const result = { path: "", file: filePath };
-    const src = yield (0, import_fs_jetpack12.readAsync)(filePath, "utf8");
+    const src = yield (0, import_fs_jetpack13.readAsync)(filePath, "utf8");
     if (src) {
       yield traverse(src, (parent) => ({
         visitObjectExpression(n) {
@@ -73631,7 +73688,7 @@ ${parsed.map((e) => {
   });
   var generateSSR = (name, path4) => __async(void 0, null, function* () {
     const parsed = yield Promise.all((yield scan4(path4)).map(parse3));
-    yield (0, import_fs_jetpack12.writeAsync)(
+    yield (0, import_fs_jetpack13.writeAsync)(
       dir.root(`app/gen/web/ssr/${name}.ts`),
       parsed.map((e) => {
         const page = e.file.substring(0, e.file.length - (0, import_path13.extname)(e.file).length).substring(path4.length + 1).replace(/\W/gi, "_");
@@ -73644,21 +73701,21 @@ ${parsed.map((e) => {
     );
   });
   var generateSSREntry = (dirs) => __async(void 0, null, function* () {
-    yield (0, import_fs_jetpack12.removeAsync)(dir.root(`app/gen/web/ssr`));
-    yield (0, import_fs_jetpack12.writeAsync)(
+    yield (0, import_fs_jetpack13.removeAsync)(dir.root(`app/gen/web/ssr`));
+    yield (0, import_fs_jetpack13.writeAsync)(
       dir.root(`app/gen/web/ssr/entry.ts`),
       dirs.map((e) => `export * as ${e} from "./${e}"`).join("\n")
     );
   });
 
   // pkgs/base/src/scaffold/web/web.ts
-  var import_fs_jetpack13 = __toESM(require_main());
+  var import_fs_jetpack14 = __toESM(require_main());
   var import_promises3 = __require("fs/promises");
   var scaffoldWeb = () => __async(void 0, null, function* () {
     const webs = (yield (0, import_promises3.readdir)(dir.root("app"))).filter(
       (e) => e.startsWith("web")
     );
-    yield (0, import_fs_jetpack13.writeAsync)(
+    yield (0, import_fs_jetpack14.writeAsync)(
       dir.path("app/gen/web/entry.ts"),
       `
 ${webs.map((e) => `export { App as ${e} } from "../../${e}/src/app";`).join("\n")}`
@@ -73691,11 +73748,12 @@ ${webs.map((e) => `export { App as ${e} } from "../../${e}/src/app";`).join("\n"
     return { shouldRestart: false };
   });
 
-  // pkgs/base/src/builder/service.ts
+  // pkgs/base/src/builder/service-main.ts
   var marker = {};
-  var bundleService = (name, arg) => __async(void 0, null, function* () {
+  var buildServiceMain = (name, arg) => __async(void 0, null, function* () {
     const tstart = performance.now();
     let shouldRestart = false;
+    yield buildServiceModule(name, arg);
     yield bundle({
       input: dir.root(`app/${name}/main.ts`),
       output: dir.root(`.output/app/${name}/index.js`),
@@ -73778,14 +73836,14 @@ ${webs.map((e) => `export { App as ${e} } from "../../${e}/src/app";`).join("\n"
   var baseGlobal = global;
   var action = {
     rebuildService: (name) => __async(void 0, null, function* () {
-      return yield bundleService(name, {
+      return yield buildServiceMain(name, {
         watch: true
       });
     })
   };
 
   // pkgs/base/src/builder/build-app.ts
-  var import_fs_jetpack14 = __toESM(require_main());
+  var import_fs_jetpack15 = __toESM(require_main());
   var buildMainApp = (app) => __async(void 0, null, function* () {
     yield bundle({
       input: app.input,
@@ -73796,8 +73854,8 @@ ${webs.map((e) => `export { App as ${e} } from "../../${e}/src/app";`).join("\n"
         output: dir.root(".output/app/package.json")
       }
     });
-    const src = yield (0, import_fs_jetpack14.readAsync)(app.output, "utf8");
-    yield (0, import_fs_jetpack14.writeAsync)(
+    const src = yield (0, import_fs_jetpack15.readAsync)(app.output, "utf8");
+    yield (0, import_fs_jetpack15.writeAsync)(
       app.output,
       `/*
 \u2584\u2584\u2584         \u2584\xB7 \u2584\u258C \u2584\u2584\u2584\xB7 \u2584\u2584\u258C
@@ -73824,10 +73882,10 @@ ${src}
 
   // pkgs/base/src/builder/service/postrun/web.ts
   var import_child_process3 = __require("child_process");
-  var import_fs_jetpack15 = __toESM(require_main());
+  var import_fs_jetpack16 = __toESM(require_main());
   var import_path14 = __require("path");
   var postRunWeb = (name) => __async(void 0, null, function* () {
-    const src = yield (0, import_fs_jetpack15.readAsync)(dir.root(`app/${name}/main.ts`), "utf8");
+    const src = yield (0, import_fs_jetpack16.readAsync)(dir.root(`app/${name}/main.ts`), "utf8");
     let entry = "";
     if (src) {
       yield traverse(src, (parent) => ({
@@ -73842,7 +73900,6 @@ ${src}
       }));
     }
     if (entry) {
-      yield (0, import_fs_jetpack15.removeAsync)(dir.root(`.output/app/${name}/public`));
       const args2 = [
         (0, import_path14.join)(..."node_modules/parcel/lib/bin.js".split("/")),
         baseGlobal.mode === "dev" ? "watch" : "build",
@@ -73908,7 +73965,7 @@ ${src}
   };
 
   // pkgs/base/src/commit-hook.ts
-  var import_fs_jetpack16 = __toESM(require_main());
+  var import_fs_jetpack17 = __toESM(require_main());
 
   // node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
   var import_node_buffer2 = __require("node:buffer");
@@ -75046,7 +75103,7 @@ ${error.message}` : execaMessage;
   // pkgs/base/src/commit-hook.ts
   var commitHook = (args2) => __async(void 0, null, function* () {
     const isMainRepo = () => __async(void 0, null, function* () {
-      const conf = yield (0, import_fs_jetpack16.readAsync)(dir.root(".git/config"), "utf8");
+      const conf = yield (0, import_fs_jetpack17.readAsync)(dir.root(".git/config"), "utf8");
       if (conf == null ? void 0 : conf.includes("url = https://github.com/avolut/royal")) {
         return true;
       }
@@ -75054,44 +75111,47 @@ ${error.message}` : execaMessage;
     });
     if (args2.includes("pre-commit")) {
       if (yield isMainRepo()) {
-        if (!(yield (0, import_fs_jetpack16.existsAsync)(dir.root(".husky/_/husky.sh")))) {
+        if (!(yield (0, import_fs_jetpack17.existsAsync)(dir.root(".husky/_/husky.sh")))) {
           yield $`pnpm husky install`;
         }
-        yield (0, import_fs_jetpack16.writeAsync)(dir.root(".output/.commit"), "");
+        yield (0, import_fs_jetpack17.writeAsync)(dir.root(".output/.commit"), "");
       }
       process.exit(1);
+      return true;
     }
     if (args2.includes("post-commit")) {
       if (yield isMainRepo()) {
-        if (yield (0, import_fs_jetpack16.existsAsync)(dir.root(".output/.commit"))) {
-          yield (0, import_fs_jetpack16.removeAsync)(dir.root(".output/.commit"));
-          yield (0, import_fs_jetpack16.writeAsync)(dir.root("pkgs/version.json"), { ts: Date.now() });
+        if (yield (0, import_fs_jetpack17.existsAsync)(dir.root(".output/.commit"))) {
+          yield (0, import_fs_jetpack17.removeAsync)(dir.root(".output/.commit"));
+          yield (0, import_fs_jetpack17.writeAsync)(dir.root("pkgs/version.json"), { ts: Date.now() });
           yield $`git add .pkgs/version.json`;
           yield $`git commit --ammend -C HEAD --no-verify`;
         }
       }
       process.exit(1);
+      return true;
     }
+    return false;
   });
 
   // pkgs/base/src/scaffold/app.ts
   var import_fs5 = __require("fs");
-  var import_fs_jetpack18 = __toESM(require_main());
+  var import_fs_jetpack19 = __toESM(require_main());
 
   // pkgs/base/src/appgen/service.ts
-  var import_fs_jetpack17 = __toESM(require_main());
+  var import_fs_jetpack18 = __toESM(require_main());
   var import_promises4 = __require("fs/promises");
   var serviceGen = () => __async(void 0, null, function* () {
     const names = [];
     const actions = [];
     for (const f of yield (0, import_promises4.readdir)(dir.root("app"))) {
       const s = yield (0, import_promises4.stat)(dir.root(`app/${f}`));
-      if (s.isDirectory() && (yield (0, import_fs_jetpack17.existsAsync)(dir.root(`app/${f}/main.ts`)))) {
+      if (s.isDirectory() && (yield (0, import_fs_jetpack18.existsAsync)(dir.root(`app/${f}/main.ts`)))) {
         names.push(f);
         if (f.startsWith("web") || f.startsWith("db") || f.startsWith("srv")) {
           actions.push({ type: "single", name: f });
         } else {
-          const src = yield (0, import_fs_jetpack17.readAsync)(dir.root(`app/${f}/main.ts`), "utf8");
+          const src = yield (0, import_fs_jetpack18.readAsync)(dir.root(`app/${f}/main.ts`), "utf8");
           if (src) {
             yield traverse(src, (parent) => ({
               visitObjectExpression(n) {
@@ -75107,7 +75167,7 @@ ${error.message}` : execaMessage;
         }
       }
     }
-    yield (0, import_fs_jetpack17.writeAsync)(
+    yield (0, import_fs_jetpack18.writeAsync)(
       dir.root(`app/gen/service/actions.d.ts`),
       `${actions.map((e) => {
         return `import { main as ${e.name}_action } from "../../${e.name}/main";`;
@@ -75123,7 +75183,7 @@ ${actions.map((e) => {
 }
 `
     );
-    yield (0, import_fs_jetpack17.writeAsync)(
+    yield (0, import_fs_jetpack18.writeAsync)(
       dir.root(`app/gen/service/name.ts`),
       `export type SERVICE_NAME = "${names.join(`" | "`)}";`
     );
@@ -75131,7 +75191,7 @@ ${actions.map((e) => {
 
   // pkgs/base/src/scaffold/app.ts
   var prepareApp = () => __async(void 0, null, function* () {
-    yield (0, import_fs_jetpack18.writeAsync)(
+    yield (0, import_fs_jetpack19.writeAsync)(
       dir.path(".output/app/pnpm-workspace.yaml"),
       `packages:
   - ./*`
@@ -75622,13 +75682,13 @@ ${actions.map((e) => {
 
   // pkgs/base/src/upgrade.ts
   var import_fs6 = __require("fs");
-  var import_fs_jetpack19 = __toESM(require_main());
+  var import_fs_jetpack20 = __toESM(require_main());
   var import_path15 = __require("path");
   var upgradeHook = (args2) => __async(void 0, null, function* () {
     if (args2.includes("upgrade")) {
       const backupDir = dir.root(".output/upgrade/backup");
-      yield (0, import_fs_jetpack19.removeAsync)(dir.root(".output/upgrade"));
-      yield (0, import_fs_jetpack19.dirAsync)(backupDir);
+      yield (0, import_fs_jetpack20.removeAsync)(dir.root(".output/upgrade"));
+      yield (0, import_fs_jetpack20.dirAsync)(backupDir);
       console.log(`Upgrading Base Framework`);
       console.log(` > Downloading upgrade zip`);
       const downloadURI = `https://github.com/avolut/royal/archive/refs/heads/main.zip`;
@@ -75636,13 +75696,13 @@ ${actions.map((e) => {
       const ab = yield res.arrayBuffer();
       console.log(` > Extracting: .output/upgrade/royal`);
       const uzi = unzipSync(new Uint8Array(ab));
-      yield (0, import_fs_jetpack19.dirAsync)(dir.root(".output/upgrade/royal-main"));
+      yield (0, import_fs_jetpack20.dirAsync)(dir.root(".output/upgrade/royal-main"));
       yield Promise.all(
         Object.entries(uzi).map((_0) => __async(void 0, [_0], function* ([filename, buf]) {
           if (buf.length === 0) {
-            yield (0, import_fs_jetpack19.dirAsync)(dir.root(`.output/upgrade/${filename}`));
+            yield (0, import_fs_jetpack20.dirAsync)(dir.root(`.output/upgrade/${filename}`));
           } else {
-            yield (0, import_fs_jetpack19.writeAsync)(
+            yield (0, import_fs_jetpack20.writeAsync)(
               dir.root(`.output/upgrade/${filename}`),
               Buffer.from(buf)
             );
@@ -75653,8 +75713,8 @@ ${actions.map((e) => {
       const root2 = dir.root("");
       for (const f of (0, import_fs6.readdirSync)(dir.root(""))) {
         if (f !== "app" && f !== ".output" && f !== ".husky" && f !== ".git") {
-          if (yield (0, import_fs_jetpack19.existsAsync)((0, import_path15.join)(root2, `.output/upgrade/backup/${f}`))) {
-            yield (0, import_fs_jetpack19.moveAsync)(
+          if (yield (0, import_fs_jetpack20.existsAsync)((0, import_path15.join)(root2, `.output/upgrade/backup/${f}`))) {
+            yield (0, import_fs_jetpack20.moveAsync)(
               (0, import_path15.join)(root2, f),
               (0, import_path15.join)(root2, `.output/upgrade/backup/${f}`)
             );
@@ -75664,7 +75724,7 @@ ${actions.map((e) => {
       console.log(` > Applying upgrade`);
       for (const f of (0, import_fs6.readdirSync)((0, import_path15.join)(root2, ".output/upgrade/royal-main"))) {
         if (f !== "app" && f !== ".output" && f !== "." && f !== ".." && f !== ".husky" && f !== ".git") {
-          yield (0, import_fs_jetpack19.copyAsync)(
+          yield (0, import_fs_jetpack20.copyAsync)(
             (0, import_path15.join)(root2, `.output/upgrade/royal-main/${f}`),
             (0, import_path15.join)(root2, f),
             {
@@ -75679,15 +75739,16 @@ ${actions.map((e) => {
       } else {
         process.exit();
       }
+      process.exit(1);
       return true;
     }
   });
 
   // pkgs/base/src/version-check.ts
   var import_date_fns = __toESM(require_date_fns());
-  var import_fs_jetpack20 = __toESM(require_main());
+  var import_fs_jetpack21 = __toESM(require_main());
   var versionCheck = (opt) => __async(void 0, null, function* () {
-    const version = yield (0, import_fs_jetpack20.readAsync)(dir.root("pkgs/version.json"), "json");
+    const version = yield (0, import_fs_jetpack21.readAsync)(dir.root("pkgs/version.json"), "json");
     let timeout = {
       timer: null
     };
@@ -75709,15 +75770,6 @@ If somehow upgrade failed you can rollback using
 `)}
 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 `);
-          } else {
-            console.log(
-              `
-\u{1F44C} Royal is in latest version: v${(0, import_date_fns.format)(
-                new Date(remoteVersion.ts),
-                "1.Md.hm"
-              )}
-`
-            );
           }
         } catch (e) {
         }
@@ -75727,18 +75779,18 @@ If somehow upgrade failed you can rollback using
   });
 
   // pkgs/base/src/vscode.ts
-  var import_fs_jetpack21 = __toESM(require_main());
+  var import_fs_jetpack22 = __toESM(require_main());
   var import_path16 = __require("path");
   var vscodeSettings = () => __async(void 0, null, function* () {
     const vscodeFile = dir.path(".vscode/settings.json");
     const source = JSON.stringify(defaultVsSettings, null, 2);
-    if (yield (0, import_fs_jetpack21.existsAsync)(vscodeFile)) {
-      if ((yield (0, import_fs_jetpack21.readAsync)(vscodeFile, "utf8")) === source) {
+    if (yield (0, import_fs_jetpack22.existsAsync)(vscodeFile)) {
+      if ((yield (0, import_fs_jetpack22.readAsync)(vscodeFile, "utf8")) === source) {
         return;
       }
     }
-    yield (0, import_fs_jetpack21.dirAsync)((0, import_path16.dirname)(vscodeFile));
-    yield (0, import_fs_jetpack21.writeAsync)(vscodeFile, source);
+    yield (0, import_fs_jetpack22.dirAsync)((0, import_path16.dirname)(vscodeFile));
+    yield (0, import_fs_jetpack22.writeAsync)(vscodeFile, source);
   });
   var defaultVsSettings = {
     "typescript.preferences.importModuleSpecifier": "relative",
@@ -75778,7 +75830,7 @@ If somehow upgrade failed you can rollback using
   };
 
   // pkgs/base/src/watcher/new-service.ts
-  var import_fs_jetpack22 = __toESM(require_main());
+  var import_fs_jetpack23 = __toESM(require_main());
   var import_promises5 = __require("fs/promises");
   var import_path17 = __require("path");
   var watchNewService = () => {
@@ -75795,7 +75847,7 @@ If somehow upgrade failed you can rollback using
             }
             if (c.type === "delete") {
               console.log(`Removing service: ${source_default.red(name)}`);
-              yield (0, import_fs_jetpack22.removeAsync)(dir.root(`.output/app/${name}`));
+              yield (0, import_fs_jetpack23.removeAsync)(dir.root(`.output/app/${name}`));
               yield serviceGen();
               process.exit(99);
             } else if (c.type === "create") {
@@ -75814,12 +75866,12 @@ If somehow upgrade failed you can rollback using
                     const fpath = dir.root(`${root2}/${f}`);
                     const s2 = yield (0, import_promises5.stat)(fpath);
                     if (s2.isDirectory()) {
-                      yield (0, import_fs_jetpack22.copyAsync)(fpath, (0, import_path17.join)(c.path, f), {
+                      yield (0, import_fs_jetpack23.copyAsync)(fpath, (0, import_path17.join)(c.path, f), {
                         overwrite: true
                       });
                     } else {
-                      const src = yield (0, import_fs_jetpack22.readAsync)(fpath, "utf8");
-                      yield (0, import_fs_jetpack22.writeAsync)(
+                      const src = yield (0, import_fs_jetpack23.readAsync)(fpath, "utf8");
+                      yield (0, import_fs_jetpack23.writeAsync)(
                         (0, import_path17.join)(c.path, f),
                         (src || "").replace(/template_service/g, name)
                       );
@@ -75856,18 +75908,18 @@ If somehow upgrade failed you can rollback using
     if (args.includes("clean")) {
       console.log("Cleaning node_modules");
       const dirs = yield scanDir([dir.root()]);
-      yield (0, import_fs_jetpack23.removeAsync)(dir.root(".output"));
+      yield (0, import_fs_jetpack24.removeAsync)(dir.root(".output"));
       yield Promise.all(
-        dirs.map((e) => (0, import_fs_jetpack23.removeAsync)((0, import_path18.join)((0, import_path18.dirname)(e), "node_modules")))
+        dirs.map((e) => (0, import_fs_jetpack24.removeAsync)((0, import_path18.join)((0, import_path18.dirname)(e), "node_modules")))
       );
-      yield (0, import_fs_jetpack23.removeAsync)(dir.root("node_modules"));
+      yield (0, import_fs_jetpack24.removeAsync)(dir.root("node_modules"));
       return;
     }
     console.log(`\u2500\u2500 ${(0, import_lodash6.default)(source_default.yellow(`BASE`) + " ", 47, "\u2500")}`);
     baseGlobal.parcels = /* @__PURE__ */ new Set();
     yield createRPC("base", action, { isMain: true });
     if (args.includes("build") || args.includes("deploy") || args.includes("prod") || args.includes("staging")) {
-      yield (0, import_fs_jetpack23.removeAsync)(dir.root(`.output/app`));
+      yield (0, import_fs_jetpack24.removeAsync)(dir.root(`.output/app`));
       const app = yield prepareApp();
       baseGlobal.app = app;
       baseGlobal.mode = "prod";
@@ -75881,7 +75933,7 @@ If somehow upgrade failed you can rollback using
       yield Promise.all(
         app.serviceNames.map(
           (e) => __async(void 0, null, function* () {
-            return yield bundleService(e, { watch: false });
+            return yield buildServiceMain(e, { watch: false });
           })
         )
       );
@@ -75908,7 +75960,7 @@ Build done: ${source_default.green(`.output/app.zip`)}`);
       })));
       yield Promise.all(
         app.serviceNames.map((e) => __async(void 0, null, function* () {
-          return yield bundleService(e, { watch: true });
+          return yield buildServiceMain(e, { watch: true });
         }))
       );
       versionCheck({ timeout: 3e3 });

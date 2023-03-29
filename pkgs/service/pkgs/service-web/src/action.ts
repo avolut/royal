@@ -1,13 +1,6 @@
-import { web } from "./glbweb";
-import { initSSR } from "./init-ssr";
+import { web } from "./glb-web";
 
 export const webAction = {
-  refresh: async () => {
-    await initSSR();
-    web.ws.forEach((ws) => {
-      ws.send("hmr");
-    });
-  },
   getEntry: () => {
     return web.entry;
   },

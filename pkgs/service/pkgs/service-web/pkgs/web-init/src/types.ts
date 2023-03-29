@@ -1,10 +1,7 @@
-import {
-  CSSAttribute,
-  extractCss as GooberExtractCSS
-} from "goober";
+import { CSSAttribute, extractCss as GooberExtractCSS } from "goober";
 import { RadixRouter } from "radix3";
 import React, { FC, ReactNode } from "react";
-import { Page } from "web-types";
+import { OnRequestSSR, Page, SSR } from "web-types";
 import { PrismaClient } from "../../../../../../../app/db/node_modules/.gen";
 import type * as SRVAPI from "../../../../../../../app/gen/srv/api/srv";
 
@@ -17,33 +14,65 @@ export type PageResponse = {
 type Api = typeof SRVAPI;
 type ApiName = keyof Api;
 
-declare global {
-  const extractCss: typeof GooberExtractCSS;
-  const router: RadixRouter<Page>;
-  const navigate: (href: string) => void;
-  const __WEB_NAME__: string;
-  const __ETAG__: string;
-  const __SRV_URL__: string;
-  const __MODE__: "dev" | "prod" | "staging";
-  const __SSR_PROP__: Record<string, any>;
-  const __STATUS_CODE__: number;
-  const __LAYOUTS__: Record<
+interface WebGlobal {
+  extractCss: typeof GooberExtractCSS;
+  router: RadixRouter<Page>;
+  routerSSR: RadixRouter<{ ssr: OnRequestSSR; params: any }>;
+  navigate: (href: string) => void;
+  isSSR: boolean;
+
+  __WEB_NAME__: string;
+  __SRV_URL__: string;
+  __SSR__: SSR;
+  __PAGES__: Record<string, Page>;
+  __MODE__: "dev" | "prod" | "staging";
+  __SSR_PROP__: Record<string, any>;
+  __STATUS_CODE__: number;
+  __LAYOUTS__: Record<
     string,
     | FC<{ children: ReactNode }>
     | { default: Promise<{ default: FC<{ children: ReactNode }> }> }
   >;
-  let __CURPAGE__: Page;
-  const css: (
+  __CURPAGE__: Page;
+
+  db: PrismaClient;
+  api: { [k in ApiName]: Awaited<Api[k]["handler"]>["_"]["api"] };
+
+  basepath: string;
+  baseurl: string;
+  serverurl: string;
+  pathname: string;
+  params: any;
+
+  Fragment: typeof React.Fragment;
+  React: typeof React;
+
+  cx: (...classNames: any[]) => string;
+  css: (
     tag: CSSAttribute | TemplateStringsArray | string,
     ...props: Array<string | number | boolean | undefined | null>
   ) => string;
-  const db: PrismaClient;
-  const api: { [k in ApiName]: Awaited<Api[k]["handler"]>["_"]["api"] };
+}
+
+declare global {
+  const isSSR: boolean;
+  const css: WebGlobal["css"];
+  const cx: WebGlobal["cx"];
+
+  const db: WebGlobal["db"];
+  const api: WebGlobal["api"];
+
+  const navigate: WebGlobal["navigate"];
+
+  const __SRV_URL__: WebGlobal["__SRV_URL__"];
+
   const basepath: string;
   const baseurl: string;
   const serverurl: string;
   const pathname: string;
-  const Fragment: typeof React.Fragment;
   const params: any;
-  const cx: (...classNames: any[]) => string;
 }
+
+export const g = (typeof global === "undefined"
+  ? window
+  : global) as unknown as WebGlobal;

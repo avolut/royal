@@ -19,7 +19,7 @@ export const createService = async <T extends RPCAction>(arg: {
   let onServiceReady = () => {};
   const action =
     (await arg.init({
-      mode: "dev",
+      mode: "dev", 
       onServiceReady: async (fn) => {
         onServiceReady = fn;
       },

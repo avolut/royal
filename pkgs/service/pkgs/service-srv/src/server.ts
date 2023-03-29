@@ -1,23 +1,22 @@
 import { DeepProxy } from "@qiwi/deep-proxy";
-import { readAsync } from "fs-jetpack";
-import { Server } from "hyper-express";
+import { Server, WSRouteHandler } from "hyper-express";
 import { createRouter } from "radix3";
 import { apiFrm } from "./api/api-frm";
 import { session } from "./api/session";
-import { resolve } from "path";
-import { dir } from "dir";
 export const server = async ({
   port,
   name,
   cookieKey,
+  ws,
 }: {
   mode: "dev" | "prod" | "staging";
   name: string;
   port: number;
   cookieKey: string;
+  ws?: Record<string, WSRouteHandler>;
 }) => {
   const server = new Server({
-    max_body_length: 9999999999,
+    max_body_length: Number.MAX_SAFE_INTEGER,
     auto_close: true,
     trust_proxy: true,
     fast_buffers: true,
@@ -33,7 +32,9 @@ export const server = async ({
   }
 
   server.any("/_api_frm", apiFrm);
-
+  if (ws) {
+    for (const [k, v] of Object.entries(ws)) server.ws(k, v);
+  }
   await session.init({ cookieKey });
   const api = (apiEntry as any)[name];
 

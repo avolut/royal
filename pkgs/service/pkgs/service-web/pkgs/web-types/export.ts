@@ -1,6 +1,6 @@
-import LiveDirectory from "live-directory";
 import { FC } from "react";
 import { Request, Response } from "hyper-express";
+import { Asset } from "../../src/asset";
 
 export type PageResponse = {
   pathname: string;
@@ -15,15 +15,7 @@ export type OnRequestSSR = (arg: {
     stream: (props?: Record<string, any>) => Promise<string>;
     render: (props?: Record<string, any>) => Promise<string>;
   };
-  asset: {
-    list: LiveDirectory;
-    send: (
-      file: Exclude<
-        ReturnType<InstanceType<typeof LiveDirectory>["get"]>,
-        undefined
-      >
-    ) => void;
-  };
+  asset: Asset;
 }) => any;
 
 export type SSR = {
@@ -32,8 +24,7 @@ export type SSR = {
     name: string;
     props: Record<string, any>;
     res: PageResponse;
-    etag: string;
-    indexCSS?: string
+    indexCSS?: string;
     onlyRoot?: boolean;
   }> | null;
   handler: Record<string, OnRequestSSR>;
@@ -54,9 +45,3 @@ export type Page = {
 export type PromisedComponent = () => Promise<{
   default: { component: FC<any>; layout?: string };
 }>;
-
-declare global {
-  const isSSR: boolean;
-  const __SSR__: SSR;
-  const __PAGES__: Record<string, Page>;
-}
