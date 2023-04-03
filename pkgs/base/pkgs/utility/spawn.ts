@@ -12,7 +12,7 @@ export const spawn = (
     ? fork(file, args, {
         cwd: opt?.cwd,
         stdio: "inherit",
-        execArgv: ["--enable-source-maps"],
+        execArgv: ["--enable-source-maps", "--trace-warnings"],
       })
     : nativeSpawn(file, args, {
         cwd: opt?.cwd,

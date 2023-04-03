@@ -7,12 +7,14 @@ import { readdir } from "fs/promises";
 import { join } from "path";
 import { dir } from "dir";
 
+const ts = Date.now();
 export const renderSSR =
   (req: Request, res: Response, code: number, ssrMode: "stream" | "render") =>
   (props: any) => {
     return new Promise<string>(async (resolve) => {
       const { App } = g.__SSR__;
 
+      res.sendStatus(code);
       if (!web.index.js) {
         try {
           const publicPath = join(dir.path(`${web.name}/public`));
@@ -24,7 +26,7 @@ export const renderSSR =
           }
         } catch (e) {}
       }
-
+ 
       if (App) {
         const { pipe } = renderToPipeableStream(
           <App
@@ -36,12 +38,12 @@ export const renderSSR =
                 web.mode === "dev" ? liveReloadSrc : ""
               };`
             )}
-            indexCSS={web.index.css}
+            indexCSS={web.index.css + `?${ts}`}
             props={props || {}}
             res={{ pathname: req.path, params: {}, statusCode: code }}
           />,
           {
-            bootstrapScripts: [`/${web.index.js}`],
+            bootstrapScripts: [`/${web.index.js}?${ts}`],
             onShellReady() {
               if (ssrMode === "stream") {
                 try {

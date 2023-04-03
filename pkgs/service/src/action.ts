@@ -42,8 +42,10 @@ export const rootAction = {
       waitConnection: true,
     });
 
-    for (const v of Object.values(rpc)) {
-      await v._receiveDefinition(svc.definitions);
+    for (const [_, v] of Object.entries(rpc)) {
+      await v._receiveDefinition(svc.definitions, {
+        __retryTimeout: 1000,
+      });
     }
   },
   async executeAction(arg: {

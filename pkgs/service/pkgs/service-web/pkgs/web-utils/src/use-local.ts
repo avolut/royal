@@ -8,25 +8,32 @@ export const useLocal = <T extends object>(
     init: boolean;
   }) => Promise<void | (() => void)> | void | (() => void),
   deps?: any[]
-): T & { render: () => void } => {
-  // if (typeof isSSR !== "undefined" && isSSR)
-  //   return { ...data, render: () => {} } as any;
-
+): {
+  [K in keyof T]: T[K] extends Promise<any> ? "loading" | Awaited<T[K]> : T[K];
+} & { render: () => void } => {
   const [, _render] = useState({});
   const _ = useRef({
     data: data as unknown as T & { render: () => void },
     deps: (deps || []) as any[],
-    init: false,
+    ready: false,
   });
   const local = _.current;
 
-  if (local.init === false) {
+  if (local.ready === false) {
+    for (const [k, v] of Object.entries(data)) {
+      if (typeof v === "object" && v instanceof Promise) {
+        (local.data as any)[k] = "loading";
+        v.then((resolved) => {
+          (local.data as any)[k] = resolved;
+          local.data.render();
+        });
+      }
+    }
+
     local.data.render = () => {
       _render({});
-      // kalau pakai stratTransition ada bug jumping cursor
-      // startTransition(() => _render({}));
     };
-    local.init = true;
+    local.ready = true;
 
     if (effect) {
       setTimeout(() => {
@@ -52,5 +59,5 @@ export const useLocal = <T extends object>(
     }
   }
 
-  return local.data;
+  return local.data as any;
 };

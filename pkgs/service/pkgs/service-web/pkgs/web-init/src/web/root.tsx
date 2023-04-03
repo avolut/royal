@@ -29,7 +29,7 @@ export const Root: FC<{
     const w = window as any;
     w.rootRender = local.render;
 
-    if (local.firstRender) local.firstRender = true;
+    if (local.firstRender) local.firstRender = false;
     else res.pathname = location.pathname;
 
     w.rootRes = res;
@@ -39,16 +39,34 @@ export const Root: FC<{
   let page = g.__PAGES__["index"];
 
   let found = g.router.lookup(res.pathname);
-  if (!found) {
+  if (!found || (found && !found.name)) {
     found = g.router.lookup(res.pathname + "/");
   }
-
-  if (!found) {
+  if (!found || (found && !found.name)) {
     found = g.router.lookup(res.pathname + "/_");
   }
+  if (!found || (found && !found.name)) {
+    found = g.router.lookup(res.pathname + "/_/");
+  }
+  if (!found || (found && !found.name)) {
+    found = g.router.lookup(res.pathname + "/_/_");
+  }
 
-  if (found) {
-    if (found.name && g.__PAGES__[found.name]) {
+  if (!found) {
+    if (!g.notFoundPage) {
+      const ffPage = Object.values(g.__PAGES__).find((e) => e.url === "*");
+      if (ffPage) {
+        g.notFoundPage = ffPage;
+      }
+    }
+
+    if (g.notFoundPage) {
+      found = g.notFoundPage;
+    }
+  }
+
+  if (found && found.name) {
+    if (g.__PAGES__[found.name]) {
       page = g.__PAGES__[found.name];
     }
     res.params = found.params || {};
@@ -100,7 +118,6 @@ export const Root: FC<{
       }
     }
   }
-
 
   return (
     <GlobalContext.Provider

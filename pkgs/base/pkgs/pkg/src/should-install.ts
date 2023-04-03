@@ -20,20 +20,21 @@ export const shouldInstall = async (path: string, silent: boolean = false) => {
 
     const entries = Object.entries(pkg[e] as Record<string, string>);
     for (const [k, v] of entries) {
+      if (k === "hyper-express") continue;
       if (v.startsWith(".") || v.startsWith("/")) {
         continue;
       }
 
-      if (!(await existsAsync(join(dir, "node_modules", k))) && !install) {
-        if (!silent)
-          console.log(
-            `module ${chalk.cyan(k)} not found in ${join(
-              dir,
-              "node_modules"
-            ).substring(process.cwd().length + 1)}`
-          );
-        install = true;
-      }
+      // if (!(await existsAsync(join(dir, "node_modules", k))) && !install) {
+      //   if (!silent)
+      //     console.log(
+      //       `module ${chalk.cyan(k)} not found in ${join(
+      //         dir,
+      //         "node_modules"
+      //       ).substring(process.cwd().length + 1)}`
+      //     );
+      //   install = true;
+      // }
       if (v === "*") {
         try {
           const res = await fetch(

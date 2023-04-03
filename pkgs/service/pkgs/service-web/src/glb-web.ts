@@ -1,11 +1,12 @@
 import { globalize } from "dir";
-import { Request, Response, Server, Websocket } from "hyper-express";
+import { Server, Websocket } from "hyper-express";
 import { ServiceModule } from "../../../export";
+import { serve } from "../module";
 import { Asset } from "./asset";
 import { initSSR } from "./init-ssr";
 
 export type WebModule = {
-  serve: (req: Request, res: Response) => Promise<void>;
+  serve: typeof serve;
   initSSR: typeof initSSR;
 };
 

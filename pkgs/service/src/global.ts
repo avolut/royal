@@ -10,7 +10,7 @@ export const svc = globalize({
     definitions: {} as Record<
       string,
       Record<string, "object" | "function" | "proxy">
-    >,
+    >, // action definition
   },
   init: async (g) => {
     g.root = await connectRPC("root")

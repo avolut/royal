@@ -44,6 +44,8 @@ interface WebGlobal {
   pathname: string;
   params: any;
 
+  notFoundPage: Page;
+
   Fragment: typeof React.Fragment;
   React: typeof React;
 

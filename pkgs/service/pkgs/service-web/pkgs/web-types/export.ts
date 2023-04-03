@@ -16,6 +16,7 @@ export type OnRequestSSR = (arg: {
     render: (props?: Record<string, any>) => Promise<string>;
   };
   asset: Asset;
+  mode: "dev" | "prod" | "staging";
 }) => any;
 
 export type SSR = {

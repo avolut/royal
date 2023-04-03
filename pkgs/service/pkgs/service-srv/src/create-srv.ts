@@ -17,7 +17,7 @@ export const createAPIServer = async ({
 }: {
   name: SERVICE_NAME;
   port: number;
-  serverURL?: string;
+  serverURL?: (mode: "dev" | "prod" | "staging") => string;
   cookieKey: string;
   ws?: Record<string, WSRouteHandler>;
 }) => {
@@ -29,8 +29,10 @@ export const createAPIServer = async ({
       srv.port = port;
       srv.cookieKey = cookieKey;
       if (serverURL) {
-        srv.serverURL = serverURL;
-      } else {
+        srv.serverURL = serverURL(mode);
+      }
+
+      if (!srv.serverURL) {
         srv.serverURL = `http://localhost:${port}`;
       }
 

@@ -15,7 +15,6 @@
     "hyper-express": "^6.5.8",
     "lodash.padend": "^4.6.1",
     "pkg": "workspace:*",
-    "process": "0.11.10",
     "rpc": "workspace:*",
     "service-web": "workspace:*",
     "typescript": "^5",

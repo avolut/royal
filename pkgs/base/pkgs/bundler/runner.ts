@@ -16,15 +16,20 @@ export const runner = {
     return await Promise.all(all);
   },
   async restart(path: keyof typeof bundler.runs) {
+    bundler.restart.add(path);
     if (bundler.runs[path]) {
       bundler.runs[path].forEach(async (run) => {
         const data = run.data;
         await this.stop(path);
         await runner.run(data.arg);
+        bundler.restart.delete(path);
       });
     } else if (bundler.lastRunArgs[path]) {
       await runner.run(bundler.lastRunArgs[path]);
+      bundler.restart.delete(path);
     } else {
+      bundler.restart.delete(path);
+
       return false;
     }
   },
@@ -88,12 +93,20 @@ export const runner = {
 
         bundler.runs[path].delete(run);
         if (bundler.runs[path].size === 0) delete bundler.runs[path];
+
+        if (!bundler.restart.has(path)) {
+          this.run(arg);
+        }
       });
 
+      let resolved = false;
       return await new Promise<boolean>((resolve) => {
         if (!isCommand) {
           run.onMessage((e) => {
-            resolve(true);
+            if (!resolved) {
+              resolved = true;
+              resolve(true);
+            }
           });
         } else {
           resolve(true);

@@ -5,18 +5,20 @@ import { dirAsync } from "fs-jetpack";
 import { Request } from "hyper-express";
 
 const cuid = createId;
-const BlankSession = {
-  id: "",
-  expired: 0,
-  data: {} as any,
-};
-type SessionEntry = typeof BlankSession;
+type SessionEntry<T> = { id: string; expired: number; data: T };
 
-export const session = {
-  lmdb: null as unknown as RootDatabase<SessionEntry>,
+export type SRVCache<T> = ReturnType<typeof createCache<T>>;
+
+export const createCache = <T>() => ({
+  lmdb: null as unknown as RootDatabase<SessionEntry<T>>,
   cookieKey: "",
-  async init(arg: { cookieKey: string }) {
-    const dbpath = join(process.cwd(), "..", "content", "session.lmdb");
+  async init(arg: { cookieKey: string; dbname?: string }) {
+    const dbpath = join(
+      process.cwd(),
+      "..",
+      "content",
+      (arg.dbname || "session") + ".lmdb"
+    );
     await dirAsync(dirname(dbpath));
     self(this).lmdb = open({
       path: dbpath,
@@ -24,7 +26,7 @@ export const session = {
     });
     self(this).cookieKey = arg.cookieKey;
   },
-  async new(data: any, expired?: Date): Promise<SessionEntry> {
+  async new(data: any, expired?: Date): Promise<SessionEntry<T>> {
     const s = {
       id: cuid(),
       expired: expired ? expired.getTime() / 1000 : 0,
@@ -35,7 +37,7 @@ export const session = {
 
     return s;
   },
-  get(req: string | Request): null | SessionEntry {
+  get<T>(req: string | Request): null | SessionEntry<T> {
     let id = "";
     if (typeof req === "string") {
       id = req;
@@ -46,7 +48,7 @@ export const session = {
     if (!id) {
       return null;
     }
-    const s = self(this).lmdb.get(id);
+    const s = self(this).lmdb.get(id) as unknown as SessionEntry<T>;
 
     if (s) {
       if (s.expired !== 0 && Date.now() / 1000 > s.expired) {
@@ -57,7 +59,7 @@ export const session = {
     }
     return null;
   },
-  async set(id: string, data: any): Promise<SessionEntry> {
+  async set(id: string, data: any): Promise<SessionEntry<T>> {
     await self(this).lmdb.put(id, data);
     return data;
   },
@@ -81,7 +83,9 @@ export const session = {
   count() {
     return self(this).lmdb.getCount();
   },
-};
+});
+
+export const session = createCache();
 
 const self = (me: Session) => me;
 type Session = typeof session;

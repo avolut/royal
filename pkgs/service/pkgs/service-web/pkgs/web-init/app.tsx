@@ -4,6 +4,7 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 import { initRouter } from "./src/web/router";
 import { defineWindow } from "./src/web/define-window";
 import { SSR } from "web-types";
+import { g } from "./src/types";
 
 export const initApp = async (name: string, App: SSR["App"]) => {
   if (!isSSR) {
@@ -41,8 +42,8 @@ export const initApp = async (name: string, App: SSR["App"]) => {
         const app = (
           <App
             initScript={init.innerText}
-            name={__WEB_NAME__}
-            props={__SSR_PROP__}
+            name={g.__WEB_NAME__}
+            props={g.__SSR_PROP__}
             res={{
               pathname: location.pathname,
               params: {},

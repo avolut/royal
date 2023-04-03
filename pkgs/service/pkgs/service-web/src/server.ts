@@ -31,18 +31,19 @@ export const server = async ({
       res.setHeader("etag", asset.etag);
       if (asset.mime) res.setHeader("content-type", asset.mime);
       res.send(asset.content);
-    } 
+    }
     return true;
   };
- 
+
   for (const f of await readdir(publicPath)) {
-    if (f.startsWith('index')) {
-      if (f.endsWith('.css')) web.index.css = f;
-      if (f.endsWith('.js')) web.index.js = f;
+    if (f.startsWith("index")) {
+      if (f.endsWith(".css")) web.index.css = f;
+      if (f.endsWith(".js")) web.index.js = f;
     }
   }
 
   await web.module.initSSR();
+
 
   server.any("/*", (req, res) => {
     serveStatic(req, res, async () => {
@@ -54,7 +55,7 @@ export const server = async ({
           console.error(e);
         }
       }
-      await web.module.serve(req, res);
+      await web.module.serve(req, res, mode);
     });
   });
 
@@ -70,6 +71,7 @@ export const server = async ({
   }
 
   server.listen(port);
+
   return server;
 };
 

@@ -2,6 +2,7 @@ import { bundle } from "bundler";
 import chalk from "chalk";
 import { dir } from "dir";
 import { existsAsync } from "fs-jetpack";
+import { prepareBuild } from "./service/prepare";
 
 export const buildServiceModule = async (
   name: string,
@@ -18,6 +19,9 @@ export const buildServiceModule = async (
       },
       event: arg.watch
         ? {
+            async onStart({}) {
+              await prepareBuild(name);
+            },
             async onEnd({ isRebuild }) {
               if (isRebuild) {
                 console.log(`${chalk.magenta("Reload")}  ${chalk.green(name)}`);

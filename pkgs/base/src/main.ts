@@ -1,7 +1,7 @@
 import { runner } from "bundler/runner";
 import chalk from "chalk";
 import { dir } from "dir";
-import { removeAsync } from "fs-jetpack";
+import { removeAsync, writeAsync } from "fs-jetpack";
 import padEnd from "lodash.padend";
 import { dirname, join } from "path";
 import { pkg, scanDir } from "pkg";
@@ -76,10 +76,16 @@ export const baseMain = async () => {
     );
     await Promise.all(app.serviceNames.map(async (e) => await postRun(e)));
     await zip(dir.root(".output/app"), dir.root(".output/app.zip"));
+
+    await writeAsync(dir.root(`.output/app/${baseGlobal.mode}`), "");
     console.log(`\nBuild done: ${chalk.green(`.output/app.zip`)}`);
     process.exit(1);
   } else {
     baseGlobal.mode = "dev";
+
+    await removeAsync(dir.root(`.output/app/prod`));
+    await removeAsync(dir.root(`.output/app/staging`));
+
     baseGlobal.rpc = {
       service: await connectRPC<typeof RootAction>("root", {
         waitConnection: false,
@@ -94,7 +100,9 @@ export const baseMain = async () => {
     await buildMainApp(app);
     await Promise.all(app.serviceNames.map(async (e) => await prepareBuild(e)));
     await Promise.all(
-      app.serviceNames.map(async (e) => await buildServiceMain(e, { watch: true }))
+      app.serviceNames.map(
+        async (e) => await buildServiceMain(e, { watch: true })
+      )
     );
 
     versionCheck({ timeout: 3000 });

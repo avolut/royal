@@ -3,24 +3,30 @@ import { Component, ReactNode } from "react";
 type ErrorBoundaryState = {
   error: Error | null;
   errorInfo: any;
+  called: boolean;
 };
 export class ErrorBoundary extends Component<
-  { children: ReactNode },
+  { children: ReactNode; onError?: () => void },
   ErrorBoundaryState
 > {
   constructor(props: any) {
     super(props);
-    this.state = { error: null, errorInfo: null };
+    this.state = { error: null, errorInfo: null, called: false };
   }
 
-  componentDidCatch = (error: any, errorInfo: any) =>
+  componentDidCatch = (error: any, errorInfo: any) => {
     catchFunc(error, errorInfo, this);
+  };
 
   render() {
     if (this.state.errorInfo) {
+      console.log(this.state.errorInfo);
+      if (this.props.onError && !this.state.called) {
+        this.setState({ ...this.state, called: true });
+        this.props.onError();
+      }
       return handleError(this);
     }
-    // Normally, just render children
     return this.props.children || <div></div>;
   }
 }

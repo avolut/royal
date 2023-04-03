@@ -50,47 +50,77 @@ export const connectRPC = async <T extends RPCAction>(
           }
         }
 
-        return new Promise<any>((resolve) => {
-          if (ws) {
-            const msgid = createId();
-            const onmsg = (raw: string) => {
-              if (ws) {
-                const msg = JSON.parse(raw) as ActionResult;
+        return new Promise<any>((resolve, reject) => {
+          const msgid = createId();
+          let retryCounter = 0;
+          let timeout = null as null | ReturnType<typeof setTimeout>;
+          let retryTimeout = 5000;
 
-                if (msg.msgid === msgid) {
-                  ws.off("message", onmsg);
-                  if (msg.type === "action-result") {
-                    if (msg.result === "null") {
-                      msg.result = null;
-                    } else if (msg.result === "undefined") {
-                      msg.result = undefined;
-                    } else if (msg.result === "0") {
-                      msg.result = 0;
+          const lastArg = args[args.length - 1];
+          if (
+            lastArg &&
+            typeof lastArg === "object" &&
+            lastArg["__retryTimeout"]
+          ) {
+            retryTimeout = lastArg["__retryTimeout"];
+          }
+
+          timeout = setTimeout(() => {
+            if (ws && ws.readyState === 1) {
+              resend();
+            }
+          }, retryTimeout);
+
+          const resend = () => {
+            if (retryCounter > 3)
+              reject("RPC Server disconnected, failed to reconne 3x");
+            retryCounter++;
+            if (ws) {
+              const onmsg = (raw: string) => {
+                if (ws) {
+                  const msg = JSON.parse(raw) as ActionResult;
+
+                  if (msg.msgid === msgid) {
+                    if (timeout) {
+                      clearTimeout(timeout);
                     }
+                    ws.off("close", resend);
+                    ws.off("message", onmsg);
+                    if (msg.type === "action-result") {
+                      if (msg.result === "null") {
+                        msg.result = null;
+                      } else if (msg.result === "undefined") {
+                        msg.result = undefined;
+                      } else if (msg.result === "0") {
+                        msg.result = 0;
+                      }
 
-                    if (!!msg.error && !!msg.result) {
-                      resolve(msg.result);
-                    } else if (!msg.error) {
-                      resolve(msg.result);
-                    } else {
-                      process.stdout.write(msg.error.msg);
-                      resolve(msg.result);
+                      if (!!msg.error && !!msg.result) {
+                        resolve(msg.result);
+                      } else if (!msg.error) {
+                        resolve(msg.result);
+                      } else {
+                        process.stdout.write(msg.error.msg);
+                        resolve(msg.result);
+                      }
                     }
                   }
                 }
-              }
-            };
+              };
 
-            ws.on("message", onmsg);
-            ws.send(
-              JSON.stringify({
-                type: "action",
-                msgid,
-                path: [...path, key],
-                args,
-              })
-            );
-          }
+              ws.once("close", resend);
+              ws.on("message", onmsg);
+              ws.send(
+                JSON.stringify({
+                  type: "action",
+                  msgid,
+                  path: [...path, key],
+                  args,
+                })
+              );
+            }
+          };
+          resend();
         });
       };
     }

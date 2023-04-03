@@ -31,7 +31,12 @@ export const apiFrm = (req: Request, res: Response) => {
     }
 
     if (res) {
-      parent.postMessage({result: await res.json(), id: msg.id }, '*')
+      const body = await res.text();
+      try {
+        parent.postMessage({result: JSON.parse(body), id: msg.id }, '*')
+      } catch(e) {
+        parent.postMessage({result: body, id: msg.id }, '*')
+      }
     }
   })
   parent.postMessage('initialized', '*')

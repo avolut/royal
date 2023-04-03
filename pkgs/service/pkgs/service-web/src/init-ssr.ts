@@ -80,7 +80,7 @@ export const initSSR = async () => {
           }
         } else result.push(e);
       });
-    return result.join(' ');
+    return result.join(" ");
   };
   g.React = React;
   g.db = dbs(service.db);

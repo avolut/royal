@@ -6,6 +6,7 @@ export const initRouter = () => {
   const routerSSR = createRouter();
 
   for (const r of Object.values(g.__PAGES__)) {
+    if (r.url === "*") continue;
     if (
       r.url.endsWith("/*") ||
       r.url.endsWith("/**") ||
@@ -20,7 +21,7 @@ export const initRouter = () => {
 
     router.insert(r.url, r);
   }
-
+ 
   for (const [url, fn] of Object.entries(g.__SSR__.handler)) {
     routerSSR.insert(url, { ssr: fn });
   }

@@ -1,7 +1,8 @@
-import { connectRPC, createRPC } from "rpc";
+import { dir } from "dir";
+import { existsAsync } from "fs-jetpack";
+import { createRPC } from "rpc";
 import { RPCAction } from "rpc/src/types";
 import { attachSpawnCleanup } from "utility/spawn";
-import { rootAction } from "./action";
 import { svc } from "./global";
 import { MODE, SERVICE_NAME } from "./types";
 
@@ -16,10 +17,15 @@ export const createService = async <T extends RPCAction>(arg: {
   attachSpawnCleanup(arg.name);
   await svc.init();
 
-  let onServiceReady = () => {};
+  let onServiceReady = async () => {};
+
+  let mode = "dev";
+  if (await existsAsync(dir.path("prod"))) mode = "prod";
+  if (await existsAsync(dir.path("staging"))) mode = "staging";
+
   const action =
     (await arg.init({
-      mode: "dev", 
+      mode: mode as any,
       onServiceReady: async (fn) => {
         onServiceReady = fn;
       },
@@ -29,8 +35,10 @@ export const createService = async <T extends RPCAction>(arg: {
     svc.definitions = def;
   };
 
+
   const definition = genDefinition(action);
   await createRPC(`${arg.name}.${arg.name}`, action);
+
   await svc.root.identify({ name: arg.name, pid: arg.name, definition });
 
   await onServiceReady();

@@ -1,4 +1,5 @@
 import { getSchema, printSchema } from "@mrleebo/prisma-ast";
+import { runner } from "bundler/runner";
 import { dir } from "dir";
 import {
   copyAsync,
@@ -40,6 +41,13 @@ datasource db {
   }
 
   const schemaRaw = await readAsync(prismaPath, "utf8");
+
+  if (!schemaRaw) {
+    console.log(
+      `Warning ${prismaPath.substring(dir.root().length + 1)} is empty.`
+    );
+  }
+
   if (schemaRaw) {
     const schema = getSchema(schemaRaw);
     let hasModel = false;
@@ -97,6 +105,7 @@ datasource db {
         overwrite: true,
       }
     );
+
     if (
       !prismaOutputSame ||
       !(await existsAsync(dir.root(`app/${name}/node_modules/.gen`)))
@@ -104,5 +113,6 @@ datasource db {
       return { generated: false, pulled: true, dburl };
     }
   }
+
   return { generated: true, pulled: true, dburl };
 };

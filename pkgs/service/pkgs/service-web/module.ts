@@ -4,7 +4,11 @@ import { web } from "./src/glb-web";
 import { renderSSR } from "./src/render-ssr";
 export * from "./src/init-ssr";
 
-export const serve = async (req: Request, res: Response) => {
+export const serve = async (
+  req: Request,
+  res: Response,
+  mode: "dev" | "staging" | "prod"
+) => {
   try {
     const foundSSR = g.routerSSR.lookup(req.url);
     if (foundSSR) {
@@ -20,13 +24,11 @@ export const serve = async (req: Request, res: Response) => {
             return await renderSSR(req, res, 200, "stream")(props);
           },
         },
+        mode,
       });
     } else {
-      const found = g.router.lookup(req.url);
-      if (found) {
-        const result = await renderSSR(req, res, 200, web.ssrMode)({});
-        if (web.ssrMode === "render") res.send(result);
-      }
+      const result = await renderSSR(req, res, 200, web.ssrMode)({});
+      if (web.ssrMode === "render") res.send(result);
     }
   } catch (e) {
     console.error(e);

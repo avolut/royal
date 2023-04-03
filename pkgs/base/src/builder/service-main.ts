@@ -50,8 +50,9 @@ export const buildServiceMain = async (
           },
           async onEnd({ isRebuild }) {
             if (isRebuild) {
-              if (shouldRestart)
+              if (shouldRestart) {
                 await baseGlobal.rpc.service.restart({ name: name as any });
+              }
             }
           },
         }

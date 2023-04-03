@@ -70,12 +70,25 @@ export const createFrameCors = async (url: string, win?: any) => {
   };
 
   return {
-    send(input: string | RequestInfo | URL, data?: any, _headers?: any) {
+    async send(input: string | RequestInfo | URL, data?: any, _headers?: any) {
       const uri = input.toString();
       const headers = { ..._headers };
 
       if (!(data instanceof w.FormData || data instanceof w.File)) {
         headers["content-type"] = "application/json";
+      } else {
+        if (data instanceof w.File) {
+          let ab = await new Promise<ArrayBuffer | undefined>((resolve) => {
+            const reader = new FileReader();
+            reader.addEventListener("load", (e) => {
+              resolve(e.target?.result as ArrayBuffer);
+            });
+            reader.readAsArrayBuffer(data);
+          });
+          if (ab) {
+            data = new File([ab], data.name);
+          }
+        }
       }
 
       return sendRaw(
