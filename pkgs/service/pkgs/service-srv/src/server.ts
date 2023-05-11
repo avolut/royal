@@ -8,6 +8,7 @@ export const server = async ({
   name,
   cookieKey,
   ws,
+  mode,
 }: {
   mode: "dev" | "prod" | "staging";
   name: string;
@@ -111,7 +112,7 @@ export const server = async ({
               return value;
             });
 
-            const im = handler.bind({ req: nreq, res });
+            const im = handler.bind({ req: nreq, res, mode });
 
             const params: any = {};
 

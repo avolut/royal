@@ -3,15 +3,18 @@ import { Component, ReactNode } from "react";
 type ErrorBoundaryState = {
   error: Error | null;
   errorInfo: any;
-  called: boolean;
 };
 export class ErrorBoundary extends Component<
-  { children: ReactNode; onError?: () => void },
+  {
+    children: ReactNode;
+    onError?: (error: any) => void;
+    onSuccess?: () => void;
+  },
   ErrorBoundaryState
 > {
   constructor(props: any) {
     super(props);
-    this.state = { error: null, errorInfo: null, called: false };
+    this.state = { error: null, errorInfo: null };
   }
 
   componentDidCatch = (error: any, errorInfo: any) => {
@@ -20,13 +23,15 @@ export class ErrorBoundary extends Component<
 
   render() {
     if (this.state.errorInfo) {
-      console.log(this.state.errorInfo);
-      if (this.props.onError && !this.state.called) {
-        this.setState({ ...this.state, called: true });
-        this.props.onError();
+      if (this.props.onError) {
+        this.props.onError(this.state.errorInfo);
       }
       return handleError(this);
     }
+    if (this.props.onSuccess) {
+      this.props.onSuccess();
+    }
+
     return this.props.children || <div></div>;
   }
 }

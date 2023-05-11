@@ -20,7 +20,7 @@ const { join, dirname } = require("path");
 const basePath = join(process.cwd(), ..."pkgs/base/main.js".split("/"));
 const args = process.argv.slice(2);
 
-let baseReady = false;
+let baseRestartable = false;
 
 const main = async () => {
   if (!existsSync(join(process.cwd(), "node_modules"))) {
@@ -64,8 +64,9 @@ const main = async () => {
           if (!resolved) {
             resolved = true;
             resolve();
-          } else if (baseReady) {
+          } else if (baseRestartable) {
             global.base.kill(2);
+            baseRestartable = false;
           }
         });
       });
@@ -77,6 +78,8 @@ const main = async () => {
 };
 
 const runBase = () => {
+  baseRestartable = false;
+
   global.base = fork(basePath, args, {
     env: {
       ...process.env,
@@ -86,7 +89,7 @@ const runBase = () => {
   });
 
   global.base.on("message", (e) => {
-    if (e === "base-ready") baseReady = true;
+    if (e === "base-restartable") baseRestartable = true;
   });
 
   global.base.on("exit", (code) => {
@@ -98,6 +101,7 @@ const runBase = () => {
       }
       process.exit();
     } else {
+      console.log(`Base crashed ${code}, restarting...`);
       runBase();
     }
   });

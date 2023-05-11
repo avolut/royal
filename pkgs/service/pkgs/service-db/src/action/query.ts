@@ -9,6 +9,10 @@ export const execQuery = async (args: DBArg, obj: any, key: string) => {
     console.log("Waiting db to connect...");
     await waitUntil(() => obj[key]);
   }
+  
+  if (table === "*") {
+    return obj["prisma"]._baseDmmf.datamodel.models.map((e: any) => e.name);
+  }
 
   const tableInstance = (obj[key] as any)[table];
 

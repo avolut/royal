@@ -1,4 +1,6 @@
 import React from "react";
+import JSXDevRuntime from "react/jsx-dev-runtime";
+import JSXRuntime from "react/jsx-runtime";
 import { apiClient } from "./api";
 import { dbClient } from "./db";
 export const defineWindow = async () => {
@@ -17,6 +19,8 @@ export const defineWindow = async () => {
   w.baseurl = scheme + "://" + host + (port ? ":" + port : "") + "/";
   w.basepath = "/";
   w.React = React;
+  w.JSXRuntime = JSXRuntime;
+  w.JSXDevRuntime = JSXDevRuntime;
 
   w.pathname = location.pathname;
 
@@ -34,14 +38,15 @@ export const defineWindow = async () => {
           }
         } else result.push(e);
       });
-    return result.join(' ');
+    return result.join(" ");
   };
 
   const apiEntry = await import(
     "../../../../../../../../app/gen/srv/api/entry-args"
   );
   w.db = dbClient("db");
-  w.api = apiClient((apiEntry as any)["srv"]);
+  w.apiEntry = (apiEntry as any)["srv"];
+  w.api = apiClient(w.apiEntry);
   w.navigate = (href: string) => {
     let _href = href;
 

@@ -30,11 +30,11 @@ export const buildMainApp = async (app: { input: string; output: string }) => {
   const { join } = require("path");
   if (!existsSync(join(process.cwd(), "node_modules"))) {
     await new Promise((resolve) => {
+      console.log("Installing deps:", process.cwd());
       const pnpm = spawn("pnpm", ["i"], { stdio: "inherit", shell: true });
       pnpm.on("exit", resolve);
     });
   }
-
 ${src}
 })()`
   );

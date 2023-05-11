@@ -29,14 +29,17 @@ export const postRunWeb = async (name: string) => {
   }
 
   if (entry) {
+    await removeAsync(dir.root(`.output/app/${name}/public`));
+
     const args = [
       join(..."node_modules/parcel/lib/bin.js".split("/")),
       baseGlobal.mode === "dev" ? "watch" : "build",
       entry,
-      baseGlobal.mode === "dev" ? "--no-hmr" : "",
+      baseGlobal.mode === "dev" ? "--no-hmr" : "--no-optimize",
       "--dist-dir",
       dir.root(`.output/app/${name}/public`),
     ].filter((e) => e);
+
     const parcel = spawn("node", args, {
       cwd: dir.root(`app/${name}`),
       stdio: ["ignore", "inherit", "inherit"],

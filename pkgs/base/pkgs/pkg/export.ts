@@ -113,7 +113,7 @@ export const pkg = {
     }
   ) {
     const _arg = arg ? arg : { cwd: undefined, silent: false };
-    const silent = _arg.silent === true ? true : false;
+    let silent = _arg.silent === true ? true : false;
 
     if (g.pkgRunning.size > 0) {
       await Promise.all([...g.pkgRunning.values()]);

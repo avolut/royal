@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { dir } from "dir";
-import { context } from "esbuild";
+import { Plugin, context } from "esbuild";
 import { readAsync, writeAsync } from "fs-jetpack";
 import padEnd from "lodash.padend";
 import { dirname } from "path";
@@ -16,14 +16,31 @@ export const bundle = async (arg: {
   pkgjson?: { input: string; output?: string };
   tstart?: number | false;
   watch?: boolean;
-  format?: "iife" | "cjs";
+  format?: "iife" | "cjs" | "esm";
   event?: {
     onStart?: (arg: { isRebuild: boolean }) => any;
     onEnd?: (arg: { isRebuild: boolean }) => any;
   };
+  minify?: boolean;
+  splitting?: boolean;
+  plugins?: Plugin[];
+  silent?: boolean;
+  external?: string[];
 }): Promise<boolean> => {
-  const { input, output, watch, pkgjson, tstart, event, format } = arg;
+  const {
+    input,
+    output,
+    watch,
+    pkgjson,
+    tstart,
+    event,
+    format,
+    silent,
+    splitting,
+    plugins,
+  } = arg;
 
+  let print = typeof silent === "undefined" ? true : !silent;
   let t0 = tstart || performance.now();
   if (!bundler.bundlers) {
     bundler.bundlers = new Set();
@@ -45,17 +62,24 @@ export const bundle = async (arg: {
           await writeAsync(pkgjson.output, externalJson);
         }
       }
-      const external = ["esbuild", ...Object.keys(externalJson.dependencies)];
+      const external = [
+        "esbuild",
+        ...Object.keys(externalJson.dependencies),
+        ...(arg.external || []),
+      ];
 
       let isRebuild = false;
       const c = await context({
         entryPoints: [input],
-        outfile: output,
+        outfile: splitting ? undefined : output,
+        outdir: splitting ? dirname(output) : undefined,
         bundle: true,
+        minify: arg.minify,
         sourcemap: true,
-        platform: "node",
-        format,
+        platform: format === "esm" ? "browser" : "node",
+        format: splitting ? "esm" : format,
         external,
+        splitting,
         loader: {
           ".css": "text",
           ".png": "dataurl",
@@ -68,7 +92,11 @@ export const bundle = async (arg: {
           ".svg": "dataurl",
           ".node": "dataurl",
         },
+        define: {
+          "process.env.NODE_ENV": `"production"`,
+        },
         plugins: [
+          ...(plugins || []),
           {
             name: "root",
             setup(build) {
@@ -83,7 +111,7 @@ export const bundle = async (arg: {
               });
               build.onEnd(async () => {
                 if (event && event.onEnd) {
-                  if (isRebuild && tstart !== false) {
+                  if (isRebuild && tstart !== false && print) {
                     console.log(
                       `${padEnd(tag, 30, " ")} ${formatDuration(
                         performance.now() - t0
@@ -95,7 +123,7 @@ export const bundle = async (arg: {
                 }
 
                 if (!isRebuild) {
-                  if (tstart !== false) {
+                  if (tstart !== false && print) {
                     console.log(
                       `${padEnd(tag, 30, " ")} ${formatDuration(
                         performance.now() - t0

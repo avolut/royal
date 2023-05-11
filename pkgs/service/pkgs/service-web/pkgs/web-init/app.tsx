@@ -5,13 +5,16 @@ import { initRouter } from "./src/web/router";
 import { defineWindow } from "./src/web/define-window";
 import { SSR } from "web-types";
 import { g } from "./src/types";
+import { decompressFromBase64 as decompress } from "lz-string";
+
+const w = window as any;
+new Function(decompress(w.royal))();
 
 export const initApp = async (name: string, App: SSR["App"]) => {
   if (!isSSR) {
     setup(React.createElement);
     defineWindow();
 
-    const w = window as any;
     const pageImport = (await import(
       "../../../../../../app/gen/web/page/entry"
     )) as any;
@@ -37,7 +40,7 @@ export const initApp = async (name: string, App: SSR["App"]) => {
 
     const onlyRoot = true;
     if (App) {
-      const init = document.getElementById("init_script");
+      const init = document.getElementById("_royal_");
       if (init) {
         const app = (
           <App

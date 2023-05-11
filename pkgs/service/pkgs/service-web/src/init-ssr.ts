@@ -1,5 +1,4 @@
-import { dir } from "dir";
-import { walkDir } from "pkg";
+import { compressToBase64 as compress } from "lz-string";
 import React from "react";
 import { dbs } from "service-db";
 import { ssr } from "web-init";
@@ -16,8 +15,11 @@ export const initSSR = async () => {
     App: null,
     handler: {},
     initScript: (inject: string) => {
-      return `\
-(() => {const w=window;w.__REACT_DEVTOOLS_GLOBAL_HOOK__={isDisabled:!0},w.__SRV_URL__="${srvURL}",w.__WEB_NAME__="${web.name}",w.isSSR=!1;${inject}})()`;
+      const src = compress(
+        `const w=window;w.__REACT_DEVTOOLS_GLOBAL_HOOK__={isDisabled:!0},w.__SRV_URL__="${srvURL}",w.__WEB_NAME__="${web.name}",w.isSSR=!1;${inject}`
+      );
+
+      return `window.royal="${src}";`;
     },
   };
 

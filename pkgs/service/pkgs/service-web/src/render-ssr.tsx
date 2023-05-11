@@ -1,11 +1,11 @@
+import { dir } from "dir";
+import { readdir } from "fs/promises";
+import { Request, Response } from "hyper-express";
+import { join } from "path";
+import { renderToPipeableStream } from "react-dom/server";
 import { g } from "web-init/src/types";
 import { web } from "./glb-web";
-import { renderToPipeableStream } from "react-dom/server";
 import { liveReloadSrc } from "./live-reload";
-import { Request, Response } from "hyper-express";
-import { readdir } from "fs/promises";
-import { join } from "path";
-import { dir } from "dir";
 
 const ts = Date.now();
 export const renderSSR =
@@ -26,7 +26,7 @@ export const renderSSR =
           }
         } catch (e) {}
       }
- 
+
       if (App) {
         const { pipe } = renderToPipeableStream(
           <App

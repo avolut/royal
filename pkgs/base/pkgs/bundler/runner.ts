@@ -1,7 +1,7 @@
 import commandExists from "command-exists";
-import { existsSync } from "fs";
-import { spawn } from "utility/spawn";
-import { bundler } from "./global";
+import {existsSync} from "fs";
+import {spawn} from "utility/spawn";
+import {bundler} from "./global";
 
 export const runner = {
   get list() {
@@ -16,6 +16,9 @@ export const runner = {
     return await Promise.all(all);
   },
   async restart(path: keyof typeof bundler.runs) {
+    if (!bundler.restart) {
+      bundler.restart = new Set();
+    }
     bundler.restart.add(path);
     if (bundler.runs[path]) {
       bundler.runs[path].forEach(async (run) => {
@@ -59,7 +62,7 @@ export const runner = {
     silent?: boolean;
   }) {
     try {
-      const { path, args, cwd, onStop } = arg;
+      const {path, args, cwd, onStop} = arg;
 
       let isCommand = false;
 
@@ -94,7 +97,7 @@ export const runner = {
         bundler.runs[path].delete(run);
         if (bundler.runs[path].size === 0) delete bundler.runs[path];
 
-        if (!bundler.restart.has(path)) {
+        if (bundler.restart && !bundler.restart.has(path)) {
           this.run(arg);
         }
       });
@@ -113,6 +116,7 @@ export const runner = {
         }
       });
     } catch (e) {
+      console.log(e);
       return false;
     }
   },

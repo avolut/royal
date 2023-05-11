@@ -1,19 +1,51 @@
 import { waitUntil } from "web-utils";
 import { createFrameCors } from "./iframe-cors";
 
-export const dbClient = (name: string) => {
+export const dbClient = (name: string, dburl?: string) => {
   return new Proxy(
     {},
     {
       get(_, table: string) {
+        if (table === "_tables") {
+          return () => {
+            return fetchSendDb(
+              name,
+              {
+                name,
+                action: "definition",
+                table: "*",
+              },
+              dburl
+            );
+          };
+        }
+
+        if (table === "_definition") {
+          return (table: string) => {
+            return fetchSendDb(
+              name,
+              {
+                name,
+                action: "definition",
+                table,
+              },
+              dburl
+            );
+          };
+        }
+
         if (table.startsWith("$")) {
           return (...params: any[]) => {
-            return fetchSendDb(name, {
+            return fetchSendDb(
               name,
-              action: "query",
-              table,
-              params,
-            });
+              {
+                name,
+                action: "query",
+                table,
+                params,
+              },
+              dburl
+            );
           };
         }
 
@@ -26,12 +58,16 @@ export const dbClient = (name: string) => {
                   table = action;
                   action = "query";
                 }
-                return fetchSendDb(name, {
+                return fetchSendDb(
                   name,
-                  action,
-                  table,
-                  params,
-                });
+                  {
+                    name,
+                    action,
+                    table,
+                    params,
+                  },
+                  dburl
+                );
               };
             },
           }
@@ -41,7 +77,11 @@ export const dbClient = (name: string) => {
   );
 };
 
-export const fetchSendDb = async (name: string, params: any) => {
+export const fetchSendDb = async (
+  name: string,
+  params: any,
+  dburl?: string
+) => {
   const w = window as any;
   let url = `/_dbs/${name}`;
   let frm: Awaited<ReturnType<typeof createFrameCors>>;
@@ -51,7 +91,7 @@ export const fetchSendDb = async (name: string, params: any) => {
   }
   if (!w.frmapi) {
     w.frmapi = {};
-    w.frmapi[w.serverurl] = await createFrameCors(w.serverurl);
+    w.frmapi[w.serverurl] = await createFrameCors(dburl || w.serverurl);
   }
   frm = w.frmapi[w.serverurl];
 

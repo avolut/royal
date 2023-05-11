@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import "../../web-init/src/types";
 
@@ -9,45 +9,53 @@ export const useLocal = <T extends object>(
   }) => Promise<void | (() => void)> | void | (() => void),
   deps?: any[]
 ): {
-  [K in keyof T]: T[K] extends Promise<any> ? "loading" | Awaited<T[K]> : T[K];
-} & { render: () => void } => {
+  [K in keyof T]: T[K] extends Promise<any> ? null | Awaited<T[K]> : T[K];
+} & { render: () => void; _loading: Record<string, boolean> } => {
   const [, _render] = useState({});
   const _ = useRef({
-    data: data as unknown as T & { render: () => void },
+    data: data as unknown as T & {
+      render: () => void;
+      _loading: Record<string, boolean>;
+    },
     deps: (deps || []) as any[],
+    promisedKeys: new Set<string>(),
     ready: false,
   });
   const local = _.current;
 
+  useEffect(() => {
+    local.ready = true;
+    if (effect) effect({ init: true });
+  }, []);
+
   if (local.ready === false) {
+    local.data._loading = {};
+
     for (const [k, v] of Object.entries(data)) {
-      if (typeof v === "object" && v instanceof Promise) {
-        (local.data as any)[k] = "loading";
-        v.then((resolved) => {
-          (local.data as any)[k] = resolved;
-          local.data.render();
-        });
+      if (!local.promisedKeys.has(k)) {
+        let val = v;
+        if (typeof val === "object" && val instanceof Promise) {
+          local.data._loading[k] = true;
+          local.promisedKeys.add(k);
+          (local.data as any)[k] = null;
+          val.then((resolved) => {
+            (local.data as any)[k] = resolved;
+            local.data._loading[k] = false;
+            local.data.render();
+          });
+        }
       }
     }
 
     local.data.render = () => {
-      _render({});
+      if (local.ready) _render({});
     };
-    local.ready = true;
-
-    if (effect) {
-      setTimeout(() => {
-        effect({ init: true });
-      });
-    }
   } else {
     if (local.deps.length > 0 && deps) {
       for (const [k, dep] of Object.entries(deps) as any) {
         if (local.deps[k] !== dep) {
           local.deps[k] = dep;
 
-          // local.data = { ...data } as any;
-          // local.data.render = () => _render({});
           if (effect) {
             setTimeout(() => {
               effect({ init: false });

@@ -3,10 +3,7 @@ import { FC, lazy } from "react";
 
 export const ServerScript: FC<{ source: string }> = ({ source }) => {
   return (
-    <script
-      id="init_script"
-      dangerouslySetInnerHTML={{ __html: source }}
-    ></script>
+    <script id="_royal_" dangerouslySetInnerHTML={{ __html: source }}></script>
   );
 };
 

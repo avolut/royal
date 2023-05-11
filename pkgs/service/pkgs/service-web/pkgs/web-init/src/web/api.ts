@@ -1,12 +1,13 @@
 import { fetchSendApi } from "./iframe-cors";
 
 export const apiClient = (
-  api: Record<string, { url: string; args: any[] }>
+  api: Record<string, { url: string; args: any[] }>,
+  apiURL?: string
 ) => {
   return new Proxy(
     {},
     {
-      get: (_, actionName: string) => {
+      get: (_, actionName: string) => { 
         return (...rest: any) => {
           return new Promise<any>(async (resolve) => {
             if (!api || !api[actionName]) {
@@ -29,9 +30,11 @@ export const apiClient = (
                   actionUrl = actionUrl.replace(`:${paramName}?`, p + "");
                   actionUrl = actionUrl.replace(`:${paramName}`, p + "");
                 }
-              } 
+              }
 
-              const url = `${basepath === "/" ? "" : basepath}${actionUrl}`;
+              let basePath = basepath === "/" ? "" : basepath;
+
+              const url = `${apiURL || basePath}${actionUrl}`;
               const result = await fetchSendApi(url, rest);
               resolve(result);
             } else {

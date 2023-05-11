@@ -4,6 +4,7 @@ import React, { FC, ReactNode } from "react";
 import { OnRequestSSR, Page, SSR } from "web-types";
 import { PrismaClient } from "../../../../../../../app/db/node_modules/.gen";
 import type * as SRVAPI from "../../../../../../../app/gen/srv/api/srv";
+import { DbDefCols, DbDefRels } from "service-db/src/glbdb";
 
 export type PageResponse = {
   pathname: string;
@@ -35,7 +36,12 @@ interface WebGlobal {
   >;
   __CURPAGE__: Page;
 
-  db: PrismaClient;
+  db: PrismaClient & {
+    _tables: () => Promise<string[]>;
+    _definition: (
+      table: string
+    ) => Promise<{ db: { name: string }; rels: DbDefRels; columns: DbDefCols }>;
+  };
   api: { [k in ApiName]: Awaited<Api[k]["handler"]>["_"]["api"] };
 
   basepath: string;

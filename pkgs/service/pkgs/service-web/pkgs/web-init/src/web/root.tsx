@@ -1,5 +1,5 @@
 import { FC, lazy, ReactNode, Suspense } from "react";
-import { GlobalContext, useLocal } from "web-utils";
+import { GlobalContext, useLocal, waitUntil } from "web-utils";
 import { g, PageResponse } from "../types";
 import { ErrorBoundary } from "./error-boundary";
 import { PromisedComponent } from "./page";
@@ -117,6 +117,13 @@ export const Root: FC<{
         local.pathLoaded = true;
       }
     }
+  }
+
+  if (!g.api) {
+    waitUntil(() => typeof g.api !== "undefined").then(() => {
+      local.render();
+    });
+    return null;
   }
 
   return (

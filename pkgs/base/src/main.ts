@@ -20,6 +20,7 @@ import { upgradeHook } from "./upgrade";
 import { versionCheck } from "./version-check";
 import { vscodeSettings } from "./vscode";
 import { watchNewService } from "./watcher/new-service";
+import { buildPrasiPlugin } from "./builder/prasi-plugin";
 
 const args = process.argv.slice(2);
 
@@ -74,23 +75,31 @@ export const baseMain = async () => {
         async (e) => await buildServiceMain(e, { watch: false })
       )
     );
+
+    if (app.serviceNames.includes("web") && app.serviceNames.includes("srv")) {
+      await buildPrasiPlugin();
+    }
     await Promise.all(app.serviceNames.map(async (e) => await postRun(e)));
-    await zip(dir.root(".output/app"), dir.root(".output/app.zip"));
+    // await zip(dir.root(".output/app"), dir.root(".output/app.zip"));
 
     await writeAsync(dir.root(`.output/app/${baseGlobal.mode}`), "");
-    console.log(`\nBuild done: ${chalk.green(`.output/app.zip`)}`);
+    console.log(`\nBuild done: ${chalk.green(`.output/app`)}`);
     process.exit(1);
   } else {
+    setTimeout(() => {}, 1000000); // prevent exit
     baseGlobal.mode = "dev";
 
     await removeAsync(dir.root(`.output/app/prod`));
     await removeAsync(dir.root(`.output/app/staging`));
 
-    baseGlobal.rpc = {
-      service: await connectRPC<typeof RootAction>("root", {
-        waitConnection: false,
-      }),
-    };
+    connectRPC<typeof RootAction>("root", {
+      waitConnection: true,
+    }).then((e) => {
+      if (process.send) process.send("base-restartable");
+      baseGlobal.rpc = {
+        service: e,
+      };
+    });
 
     const app = await prepareApp();
     baseGlobal.app = app;
@@ -105,11 +114,12 @@ export const baseMain = async () => {
       )
     );
 
+    if (app.serviceNames.includes("web") && app.serviceNames.includes("srv")) {
+      await buildPrasiPlugin();
+    }
+
     versionCheck({ timeout: 3000 });
 
-    if (process.send) process.send("base-ready");
-
-    console.log("");
     await runner.run({
       path: app.output,
       cwd: app.cwd,

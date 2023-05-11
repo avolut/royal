@@ -15,6 +15,7 @@
     "hyper-express": "^6.5.8",
     "lodash.padend": "^4.6.1",
     "pkg": "workspace:*",
+    "react": "18.2.0",
     "rpc": "workspace:*",
     "service-web": "workspace:*",
     "typescript": "^5",
@@ -23,13 +24,17 @@
   },
   "devDependencies": {
     "@types/lodash.padend": "^4.6.7",
-    "@types/node": "^18.15.5"
+    "@types/node": "^18.15.5",
+    "@types/react": "18.0.33"
   },
   "external": [
     "@parcel/watcher",
     "hyper-express",
     "typescript",
     "@swc/core",
-    "@parcel/core"
+    "@parcel/core",
+    "@tailwindcss/oxide",
+    "tailwindcss",
+    "lightningcss"
   ]
 }
