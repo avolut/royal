@@ -1,22 +1,31 @@
 {
   "name": "srv",
-  "version": "0.0.1",
   "dependencies": {
-    "service-srv": "workspace:*",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "service-srv": "workspace:^",
+    "dir": "workspace:^",
+    "@node-rs/argon2": "1.4.0",
+    "fs-jetpack": "5.1.0",
+    "dbgen": "../db/node_modules/.gen",
     "lodash.set": "4.3.2",
+    "lodash.get": "4.4.2",
+    "lodash.trim": "4.5.1",
     "mime-types": "2.1.35",
-    "@node-rs/argon2": "1.3.0",
-    "fs-jetpack": "5.1.0"
+    "sharp": "0.31.3",
+    "lz-string": "1.5.0",
+    "@ts-morph/bootstrap": "0.18.0",
+    "@swc/core": "1.3.39"
   },
   "devDependencies": {
+    "@types/sharp": "0.31.1",
+    "@types/mime-types": "2.1.1",
     "@types/lodash.set": "4.3.7",
-    "@types/mime-types": "2.1.1"
+    "@types/lodash.trim": "4.5.7",
+    "@types/lodash.get": "4.4.7"
   },
   "external": [
-    "hyper-express",
-    "lmdb",
-    "@node-rs/argon2"
+    "sharp",
+    "@node-rs/argon2",
+    "@swc/core",
+    "lmdb"
   ]
 }
