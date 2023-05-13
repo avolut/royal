@@ -44,7 +44,6 @@ export const server = async ({
 
   await web.module.initSSR();
 
-
   server.any("/*", (req, res) => {
     serveStatic(req, res, async () => {
       if (mode === "dev") {

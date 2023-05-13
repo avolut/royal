@@ -26,6 +26,7 @@
     "sharp",
     "@node-rs/argon2",
     "@swc/core",
+    "hyper-express",
     "lmdb"
   ]
 }
