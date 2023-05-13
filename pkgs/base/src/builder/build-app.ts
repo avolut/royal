@@ -1,6 +1,11 @@
 import { bundle } from "bundler";
 import { dir } from "dir";
-import { readAsync, writeAsync } from "fs-jetpack";
+import { existsAsync, readAsync, writeAsync } from "fs-jetpack";
+import { baseGlobal } from "../action";
+
+const g = global as unknown as {
+  afterBuild?: () => Promise<void>;
+};
 
 export const buildMainApp = async (app: { input: string; output: string }) => {
   await bundle({
@@ -38,4 +43,13 @@ export const buildMainApp = async (app: { input: string; output: string }) => {
 ${src}
 })()`
   );
+
+  if (await existsAsync(dir.root("app/build.ts"))) {
+    try {
+      const res = await import("../../../../app/build");
+      g.afterBuild = await res.build(baseGlobal.mode);
+    } catch (e) {
+      console.error("Failed to run app/build.ts", e);
+    }
+  }
 };

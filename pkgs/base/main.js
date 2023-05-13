@@ -30,8 +30,15 @@
       return require.apply(this, arguments);
     throw new Error('Dynamic require of "' + x + '" is not supported');
   });
+  var __esm = (fn, res) => function __init() {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  };
   var __commonJS = (cb, mod) => function __require2() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
   };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
@@ -222,6 +229,49 @@
   var require_command_exists2 = __commonJS({
     "node_modules/.pnpm/command-exists@1.2.9/node_modules/command-exists/index.js"(exports2, module2) {
       module2.exports = require_command_exists();
+    }
+  });
+
+  // pkgs/base/pkgs/dir/export.ts
+  var import_fs2, import_path, import_process, globalize, dir;
+  var init_export = __esm({
+    "pkgs/base/pkgs/dir/export.ts"() {
+      import_fs2 = __require("fs");
+      import_path = __require("path");
+      import_process = __require("process");
+      globalize = (arg) => {
+        const { name, init } = arg;
+        const g4 = global;
+        if (typeof g4[name] === "undefined") {
+          g4[name] = arg.value;
+        }
+        g4[name].init = async () => {
+          if (init) {
+            await init(g4[name]);
+          }
+        };
+        return g4[name];
+      };
+      dir = new Proxy(
+        {},
+        {
+          get(_target, p) {
+            if (p === "path") {
+              return (arg = "") => {
+                return (0, import_path.join)(process.cwd(), ...(arg || "").split("/"));
+              };
+            }
+            if (p === "root") {
+              return (arg = "") => {
+                if ((0, import_fs2.existsSync)((0, import_path.join)((0, import_process.cwd)(), "base"))) {
+                  return (0, import_path.join)(process.cwd(), ...arg.split("/"));
+                }
+                return (0, import_path.join)(process.cwd(), "..", "..", ...arg.split("/"));
+              };
+            }
+          }
+        }
+      );
     }
   });
 
@@ -611,7 +661,7 @@
           });
         });
       };
-      var dirAsync4 = (path4, passedCriteria) => {
+      var dirAsync5 = (path4, passedCriteria) => {
         return new Promise((resolve, reject) => {
           const criteria = getCriteriaDefaults(passedCriteria);
           checkWhatAlreadyOccupiesPathAsync(path4).then((stat6) => {
@@ -629,7 +679,7 @@
       exports2.validateInput = validateInput;
       exports2.sync = dirSync;
       exports2.createSync = createBrandNewDirectorySync;
-      exports2.async = dirAsync4;
+      exports2.async = dirAsync5;
       exports2.createAsync = createBrandNewDirectoryAsync;
     }
   });
@@ -2546,7 +2596,7 @@
         }
         return false;
       };
-      var existsAsync11 = (path4) => {
+      var existsAsync13 = (path4) => {
         return new Promise((resolve, reject) => {
           fs2.stat(path4).then((stat6) => {
             if (stat6.isDirectory()) {
@@ -2567,7 +2617,7 @@
       };
       exports2.validateInput = validateInput;
       exports2.sync = existsSync5;
-      exports2.async = existsAsync11;
+      exports2.async = existsAsync13;
     }
   });
 
@@ -2794,7 +2844,7 @@
         }
         return Promise.resolve();
       };
-      var copyAsync4 = (from, to, options) => {
+      var copyAsync5 = (from, to, options) => {
         return new Promise((resolve, reject) => {
           const opts = parseOptions(options, from);
           checksBeforeCopyingAsync(from, to, opts).then(() => {
@@ -2834,7 +2884,7 @@
       };
       exports2.validateInput = validateInput;
       exports2.sync = copySync;
-      exports2.async = copyAsync4;
+      exports2.async = copyAsync5;
     }
   });
 
@@ -3830,21 +3880,21 @@
       }
       convert.rgb.hsl = function(rgb) {
         const r = rgb[0] / 255;
-        const g2 = rgb[1] / 255;
+        const g4 = rgb[1] / 255;
         const b = rgb[2] / 255;
-        const min = Math.min(r, g2, b);
-        const max2 = Math.max(r, g2, b);
+        const min = Math.min(r, g4, b);
+        const max2 = Math.max(r, g4, b);
         const delta = max2 - min;
         let h;
         let s;
         if (max2 === min) {
           h = 0;
         } else if (r === max2) {
-          h = (g2 - b) / delta;
-        } else if (g2 === max2) {
+          h = (g4 - b) / delta;
+        } else if (g4 === max2) {
           h = 2 + (b - r) / delta;
         } else if (b === max2) {
-          h = 4 + (r - g2) / delta;
+          h = 4 + (r - g4) / delta;
         }
         h = Math.min(h * 60, 360);
         if (h < 0) {
@@ -3867,10 +3917,10 @@
         let h;
         let s;
         const r = rgb[0] / 255;
-        const g2 = rgb[1] / 255;
+        const g4 = rgb[1] / 255;
         const b = rgb[2] / 255;
-        const v = Math.max(r, g2, b);
-        const diff = v - Math.min(r, g2, b);
+        const v = Math.max(r, g4, b);
+        const diff = v - Math.min(r, g4, b);
         const diffc = function(c) {
           return (v - c) / 6 / diff + 1 / 2;
         };
@@ -3880,11 +3930,11 @@
         } else {
           s = diff / v;
           rdif = diffc(r);
-          gdif = diffc(g2);
+          gdif = diffc(g4);
           bdif = diffc(b);
           if (r === v) {
             h = bdif - gdif;
-          } else if (g2 === v) {
+          } else if (g4 === v) {
             h = 1 / 3 + rdif - bdif;
           } else if (b === v) {
             h = 2 / 3 + gdif - rdif;
@@ -3903,20 +3953,20 @@
       };
       convert.rgb.hwb = function(rgb) {
         const r = rgb[0];
-        const g2 = rgb[1];
+        const g4 = rgb[1];
         let b = rgb[2];
         const h = convert.rgb.hsl(rgb)[0];
-        const w = 1 / 255 * Math.min(r, Math.min(g2, b));
-        b = 1 - 1 / 255 * Math.max(r, Math.max(g2, b));
+        const w = 1 / 255 * Math.min(r, Math.min(g4, b));
+        b = 1 - 1 / 255 * Math.max(r, Math.max(g4, b));
         return [h, w * 100, b * 100];
       };
       convert.rgb.cmyk = function(rgb) {
         const r = rgb[0] / 255;
-        const g2 = rgb[1] / 255;
+        const g4 = rgb[1] / 255;
         const b = rgb[2] / 255;
-        const k = Math.min(1 - r, 1 - g2, 1 - b);
+        const k = Math.min(1 - r, 1 - g4, 1 - b);
         const c = (1 - r - k) / (1 - k) || 0;
-        const m = (1 - g2 - k) / (1 - k) || 0;
+        const m = (1 - g4 - k) / (1 - k) || 0;
         const y = (1 - b - k) / (1 - k) || 0;
         return [c * 100, m * 100, y * 100, k * 100];
       };
@@ -3945,14 +3995,14 @@
       };
       convert.rgb.xyz = function(rgb) {
         let r = rgb[0] / 255;
-        let g2 = rgb[1] / 255;
+        let g4 = rgb[1] / 255;
         let b = rgb[2] / 255;
         r = r > 0.04045 ? ((r + 0.055) / 1.055) ** 2.4 : r / 12.92;
-        g2 = g2 > 0.04045 ? ((g2 + 0.055) / 1.055) ** 2.4 : g2 / 12.92;
+        g4 = g4 > 0.04045 ? ((g4 + 0.055) / 1.055) ** 2.4 : g4 / 12.92;
         b = b > 0.04045 ? ((b + 0.055) / 1.055) ** 2.4 : b / 12.92;
-        const x = r * 0.4124 + g2 * 0.3576 + b * 0.1805;
-        const y = r * 0.2126 + g2 * 0.7152 + b * 0.0722;
-        const z = r * 0.0193 + g2 * 0.1192 + b * 0.9505;
+        const x = r * 0.4124 + g4 * 0.3576 + b * 0.1805;
+        const y = r * 0.2126 + g4 * 0.7152 + b * 0.0722;
+        const z = r * 0.0193 + g4 * 0.1192 + b * 0.9505;
         return [x * 100, y * 100, z * 100];
       };
       convert.rgb.lab = function(rgb) {
@@ -4081,43 +4131,43 @@
         }
         const n = wh + f * (v - wh);
         let r;
-        let g2;
+        let g4;
         let b;
         switch (i) {
           default:
           case 6:
           case 0:
             r = v;
-            g2 = n;
+            g4 = n;
             b = wh;
             break;
           case 1:
             r = n;
-            g2 = v;
+            g4 = v;
             b = wh;
             break;
           case 2:
             r = wh;
-            g2 = v;
+            g4 = v;
             b = n;
             break;
           case 3:
             r = wh;
-            g2 = n;
+            g4 = n;
             b = v;
             break;
           case 4:
             r = n;
-            g2 = wh;
+            g4 = wh;
             b = v;
             break;
           case 5:
             r = v;
-            g2 = wh;
+            g4 = wh;
             b = n;
             break;
         }
-        return [r * 255, g2 * 255, b * 255];
+        return [r * 255, g4 * 255, b * 255];
       };
       convert.cmyk.rgb = function(cmyk) {
         const c = cmyk[0] / 100;
@@ -4125,27 +4175,27 @@
         const y = cmyk[2] / 100;
         const k = cmyk[3] / 100;
         const r = 1 - Math.min(1, c * (1 - k) + k);
-        const g2 = 1 - Math.min(1, m * (1 - k) + k);
+        const g4 = 1 - Math.min(1, m * (1 - k) + k);
         const b = 1 - Math.min(1, y * (1 - k) + k);
-        return [r * 255, g2 * 255, b * 255];
+        return [r * 255, g4 * 255, b * 255];
       };
       convert.xyz.rgb = function(xyz) {
         const x = xyz[0] / 100;
         const y = xyz[1] / 100;
         const z = xyz[2] / 100;
         let r;
-        let g2;
+        let g4;
         let b;
         r = x * 3.2406 + y * -1.5372 + z * -0.4986;
-        g2 = x * -0.9689 + y * 1.8758 + z * 0.0415;
+        g4 = x * -0.9689 + y * 1.8758 + z * 0.0415;
         b = x * 0.0557 + y * -0.204 + z * 1.057;
         r = r > 31308e-7 ? 1.055 * r ** (1 / 2.4) - 0.055 : r * 12.92;
-        g2 = g2 > 31308e-7 ? 1.055 * g2 ** (1 / 2.4) - 0.055 : g2 * 12.92;
+        g4 = g4 > 31308e-7 ? 1.055 * g4 ** (1 / 2.4) - 0.055 : g4 * 12.92;
         b = b > 31308e-7 ? 1.055 * b ** (1 / 2.4) - 0.055 : b * 12.92;
         r = Math.min(Math.max(0, r), 1);
-        g2 = Math.min(Math.max(0, g2), 1);
+        g4 = Math.min(Math.max(0, g4), 1);
         b = Math.min(Math.max(0, b), 1);
-        return [r * 255, g2 * 255, b * 255];
+        return [r * 255, g4 * 255, b * 255];
       };
       convert.xyz.lab = function(xyz) {
         let x = xyz[0];
@@ -4206,13 +4256,13 @@
         return [l, a, b];
       };
       convert.rgb.ansi16 = function(args2, saturation = null) {
-        const [r, g2, b] = args2;
+        const [r, g4, b] = args2;
         let value = saturation === null ? convert.rgb.hsv(args2)[2] : saturation;
         value = Math.round(value / 50);
         if (value === 0) {
           return 30;
         }
-        let ansi = 30 + (Math.round(b / 255) << 2 | Math.round(g2 / 255) << 1 | Math.round(r / 255));
+        let ansi = 30 + (Math.round(b / 255) << 2 | Math.round(g4 / 255) << 1 | Math.round(r / 255));
         if (value === 2) {
           ansi += 60;
         }
@@ -4223,9 +4273,9 @@
       };
       convert.rgb.ansi256 = function(args2) {
         const r = args2[0];
-        const g2 = args2[1];
+        const g4 = args2[1];
         const b = args2[2];
-        if (r === g2 && g2 === b) {
+        if (r === g4 && g4 === b) {
           if (r < 8) {
             return 16;
           }
@@ -4234,7 +4284,7 @@
           }
           return Math.round((r - 8) / 247 * 24) + 232;
         }
-        const ansi = 16 + 36 * Math.round(r / 255 * 5) + 6 * Math.round(g2 / 255 * 5) + Math.round(b / 255 * 5);
+        const ansi = 16 + 36 * Math.round(r / 255 * 5) + 6 * Math.round(g4 / 255 * 5) + Math.round(b / 255 * 5);
         return ansi;
       };
       convert.ansi16.rgb = function(args2) {
@@ -4248,9 +4298,9 @@
         }
         const mult = (~~(args2 > 50) + 1) * 0.5;
         const r = (color & 1) * mult * 255;
-        const g2 = (color >> 1 & 1) * mult * 255;
+        const g4 = (color >> 1 & 1) * mult * 255;
         const b = (color >> 2 & 1) * mult * 255;
-        return [r, g2, b];
+        return [r, g4, b];
       };
       convert.ansi256.rgb = function(args2) {
         if (args2 >= 232) {
@@ -4260,9 +4310,9 @@
         args2 -= 16;
         let rem;
         const r = Math.floor(args2 / 36) / 5 * 255;
-        const g2 = Math.floor((rem = args2 % 36) / 6) / 5 * 255;
+        const g4 = Math.floor((rem = args2 % 36) / 6) / 5 * 255;
         const b = rem % 6 / 5 * 255;
-        return [r, g2, b];
+        return [r, g4, b];
       };
       convert.rgb.hex = function(args2) {
         const integer = ((Math.round(args2[0]) & 255) << 16) + ((Math.round(args2[1]) & 255) << 8) + (Math.round(args2[2]) & 255);
@@ -4282,16 +4332,16 @@
         }
         const integer = parseInt(colorString, 16);
         const r = integer >> 16 & 255;
-        const g2 = integer >> 8 & 255;
+        const g4 = integer >> 8 & 255;
         const b = integer & 255;
-        return [r, g2, b];
+        return [r, g4, b];
       };
       convert.rgb.hcg = function(rgb) {
         const r = rgb[0] / 255;
-        const g2 = rgb[1] / 255;
+        const g4 = rgb[1] / 255;
         const b = rgb[2] / 255;
-        const max2 = Math.max(Math.max(r, g2), b);
-        const min = Math.min(Math.min(r, g2), b);
+        const max2 = Math.max(Math.max(r, g4), b);
+        const min = Math.min(Math.min(r, g4), b);
         const chroma = max2 - min;
         let grayscale;
         let hue;
@@ -4303,11 +4353,11 @@
         if (chroma <= 0) {
           hue = 0;
         } else if (max2 === r) {
-          hue = (g2 - b) / chroma % 6;
-        } else if (max2 === g2) {
+          hue = (g4 - b) / chroma % 6;
+        } else if (max2 === g4) {
           hue = 2 + (b - r) / chroma;
         } else {
-          hue = 4 + (r - g2) / chroma;
+          hue = 4 + (r - g4) / chroma;
         }
         hue /= 6;
         hue %= 1;
@@ -4336,9 +4386,9 @@
       convert.hcg.rgb = function(hcg) {
         const h = hcg[0] / 360;
         const c = hcg[1] / 100;
-        const g2 = hcg[2] / 100;
+        const g4 = hcg[2] / 100;
         if (c === 0) {
-          return [g2 * 255, g2 * 255, g2 * 255];
+          return [g4 * 255, g4 * 255, g4 * 255];
         }
         const pure = [0, 0, 0];
         const hi = h % 1 * 6;
@@ -4376,7 +4426,7 @@
             pure[1] = 0;
             pure[2] = w;
         }
-        mg = (1 - c) * g2;
+        mg = (1 - c) * g4;
         return [
           (c * pure[0] + mg) * 255,
           (c * pure[1] + mg) * 255,
@@ -4385,8 +4435,8 @@
       };
       convert.hcg.hsv = function(hcg) {
         const c = hcg[1] / 100;
-        const g2 = hcg[2] / 100;
-        const v = c + g2 * (1 - c);
+        const g4 = hcg[2] / 100;
+        const v = c + g4 * (1 - c);
         let f = 0;
         if (v > 0) {
           f = c / v;
@@ -4395,8 +4445,8 @@
       };
       convert.hcg.hsl = function(hcg) {
         const c = hcg[1] / 100;
-        const g2 = hcg[2] / 100;
-        const l = g2 * (1 - c) + 0.5 * c;
+        const g4 = hcg[2] / 100;
+        const l = g4 * (1 - c) + 0.5 * c;
         let s = 0;
         if (l > 0 && l < 0.5) {
           s = c / (2 * l);
@@ -4407,8 +4457,8 @@
       };
       convert.hcg.hwb = function(hcg) {
         const c = hcg[1] / 100;
-        const g2 = hcg[2] / 100;
-        const v = c + g2 * (1 - c);
+        const g4 = hcg[2] / 100;
+        const v = c + g4 * (1 - c);
         return [hcg[0], (v - c) * 100, (1 - v) * 100];
       };
       convert.hwb.hcg = function(hwb) {
@@ -4416,11 +4466,11 @@
         const b = hwb[2] / 100;
         const v = 1 - b;
         const c = v - w;
-        let g2 = 0;
+        let g4 = 0;
         if (c < 1) {
-          g2 = (v - c) / (1 - c);
+          g4 = (v - c) / (1 - c);
         }
-        return [hwb[0], c * 100, g2 * 100];
+        return [hwb[0], c * 100, g4 * 100];
       };
       convert.apple.rgb = function(apple) {
         return [apple[0] / 65535 * 255, apple[1] / 65535 * 255, apple[2] / 65535 * 255];
@@ -4605,7 +4655,7 @@
         return `\x1B[${38 + offset};2;${rgb[0]};${rgb[1]};${rgb[2]}m`;
       };
       var ansi2ansi = (n) => n;
-      var rgb2rgb = (r, g2, b) => [r, g2, b];
+      var rgb2rgb = (r, g4, b) => [r, g4, b];
       var setLazyProperty = (object, property, get4) => {
         Object.defineProperty(object, property, {
           get: () => {
@@ -34499,8 +34549,8 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
               });
               var propertyType = group[0].type;
               if (group.length > 1) {
-                propertyType = (0, map_1.default)(group, function(g2) {
-                  return g2.type;
+                propertyType = (0, map_1.default)(group, function(g4) {
+                  return g4.type;
                 });
               }
               return {
@@ -35013,7 +35063,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
       var h = e.createToken({ name: "LCurly", pattern: /{/, label: "'{'" });
       var b = e.createToken({ name: "RCurly", pattern: /}/, label: "'}'", pop_mode: true });
       var v = e.createToken({ name: "LRound", pattern: /\(/, label: "'('" });
-      var g2 = e.createToken({ name: "RRound", pattern: /\)/, label: "')'" });
+      var g4 = e.createToken({ name: "RRound", pattern: /\)/, label: "')'" });
       var A = e.createToken({ name: "LSquare", pattern: /\[/, label: "'['" });
       var U = e.createToken({ name: "RSquare", pattern: /\]/, label: "']'" });
       var S = e.createToken({ name: "Comma", pattern: /,/, label: "','" });
@@ -35024,7 +35074,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
       var N = e.createToken({ name: "WhiteSpace", pattern: /\s+/, group: e.Lexer.SKIPPED });
       var M = e.createToken({ name: "LineBreak", pattern: /\n|\r\n/, line_breaks: true, label: "LineBreak" });
       var C = [m, l, p, M, N];
-      var R = { modes: { global: [].concat(C, [r, a, i, u]), block: [].concat(C, [f, L, d, y, E, h, b, A, U, v, g2, S, k, O, o, s, c, B, T, n]) }, defaultMode: "global" };
+      var R = { modes: { global: [].concat(C, [r, a, i, u]), block: [].concat(C, [f, L, d, y, E, h, b, A, U, v, g4, S, k, O, o, s, c, B, T, n]) }, defaultMode: "global" };
       var w = new e.Lexer(R);
       function j(e2, t2) {
         e2.prototype = Object.create(t2.prototype), e2.prototype.constructor = e2, (Object.setPrototypeOf || function(e3, t3) {
@@ -35049,7 +35099,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
               } }, { ALT: function() {
                 return t3.SUBRULE(t3.value);
               } }]);
-            } }), t3.CONSUME(g2);
+            } }), t3.CONSUME(g4);
           }), t3.value = t3.RULE("value", function() {
             t3.OR([{ ALT: function() {
               return t3.CONSUME(B, { LABEL: "value" });
@@ -35130,7 +35180,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
             } }]), t3.OPTION(function() {
               t3.CONSUME(v), t3.MANY_SEP({ SEP: S, DEF: function() {
                 t3.SUBRULE(t3.attributeArg);
-              } }), t3.CONSUME(g2);
+              } }), t3.CONSUME(g4);
             });
           }), t3.attributeArg = t3.RULE("attributeArg", function() {
             t3.OR([{ ALT: function() {
@@ -36927,6 +36977,58 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
     }
   });
 
+  // app/prasi-plugin.ts
+  var import_child_process3, import_fs_jetpack17, buildPrasiPlugin;
+  var init_prasi_plugin = __esm({
+    "app/prasi-plugin.ts"() {
+      "use strict";
+      import_child_process3 = __require("child_process");
+      init_export();
+      import_fs_jetpack17 = __toESM(require_main());
+      buildPrasiPlugin = (mode) => __async(void 0, null, function* () {
+        const entry = dir.root("app/prasi/plugin.tsx");
+        yield (0, import_fs_jetpack17.removeAsync)(dir.root("pkgs/service/pkgs/prasi-plugin"));
+        yield (0, import_fs_jetpack17.dirAsync)(dir.root("pkgs/service/pkgs/prasi-plugin"));
+        const args2 = [
+          dir.root("app/web/node_modules/parcel/lib/bin.js"),
+          mode === "dev" ? "watch" : "build",
+          mode === "dev" ? "--no-hmr" : "--no-optimize"
+        ].filter((e) => e);
+        const parcel = (0, import_child_process3.spawn)("node", args2, {
+          cwd: dir.root(`app/prasi`),
+          stdio: ["ignore", "inherit", "inherit"]
+        });
+        if (mode !== "dev") {
+          yield new Promise((resolve) => {
+            parcel.on("exit", resolve);
+          });
+        }
+      });
+    }
+  });
+
+  // app/build.ts
+  var build_exports = {};
+  __export(build_exports, {
+    build: () => build
+  });
+  var build;
+  var init_build = __esm({
+    "app/build.ts"() {
+      "use strict";
+      init_prasi_plugin();
+      build = (mode) => __async(void 0, null, function* () {
+        try {
+          return () => __async(void 0, null, function* () {
+            yield buildPrasiPlugin(mode);
+          });
+        } catch (e) {
+          console.log(e);
+        }
+      });
+    }
+  });
+
   // node_modules/.pnpm/isexe@2.0.0/node_modules/isexe/windows.js
   var require_windows = __commonJS({
     "node_modules/.pnpm/isexe@2.0.0/node_modules/isexe/windows.js"(exports2, module2) {
@@ -36991,10 +37093,10 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
         var myUid = options.uid !== void 0 ? options.uid : process.getuid && process.getuid();
         var myGid = options.gid !== void 0 ? options.gid : process.getgid && process.getgid();
         var u = parseInt("100", 8);
-        var g2 = parseInt("010", 8);
+        var g4 = parseInt("010", 8);
         var o = parseInt("001", 8);
-        var ug = u | g2;
-        var ret = mod & o || mod & g2 && gid === myGid || mod & u && uid === myUid || mod & ug && myUid === 0;
+        var ug = u | g4;
+        var ret = mod & o || mod & g4 && gid === myGid || mod & u && uid === myUid || mod & ug && myUid === 0;
         return ret;
       }
     }
@@ -55538,48 +55640,11 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
   var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
   var source_default = chalk;
 
-  // pkgs/base/pkgs/dir/export.ts
-  var import_fs2 = __require("fs");
-  var import_path = __require("path");
-  var import_process = __require("process");
-  var globalize = (arg) => {
-    const { name, init } = arg;
-    const g2 = global;
-    if (typeof g2[name] === "undefined") {
-      g2[name] = arg.value;
-    }
-    g2[name].init = async () => {
-      if (init) {
-        await init(g2[name]);
-      }
-    };
-    return g2[name];
-  };
-  var dir = new Proxy(
-    {},
-    {
-      get(_target, p) {
-        if (p === "path") {
-          return (arg = "") => {
-            return (0, import_path.join)(process.cwd(), ...(arg || "").split("/"));
-          };
-        }
-        if (p === "root") {
-          return (arg = "") => {
-            if ((0, import_fs2.existsSync)((0, import_path.join)((0, import_process.cwd)(), "base"))) {
-              return (0, import_path.join)(process.cwd(), ...arg.split("/"));
-            }
-            return (0, import_path.join)(process.cwd(), "..", "..", ...arg.split("/"));
-          };
-        }
-      }
-    }
-  );
-
   // pkgs/base/src/main.ts
+  init_export();
   var import_fs_jetpack27 = __toESM(require_main());
   var import_lodash6 = __toESM(require_lodash());
-  var import_path20 = __require("path");
+  var import_path19 = __require("path");
 
   // pkgs/base/pkgs/pkg/export.ts
   var import_child_process2 = __require("child_process");
@@ -55639,6 +55704,7 @@ ERROR: Async operation of type "${type}" was created in "process.exit" callback.
   });
 
   // pkgs/base/pkgs/pkg/export.ts
+  init_export();
   var import_fs_jetpack2 = __toESM(require_main());
   var g = globalThis;
   if (!g.pkgRunning) {
@@ -55860,12 +55926,12 @@ ${import_chalk2.default.magenta("Installing")} deps:
     return { target: t, name: a, receiver: s, val: o, args: c, descriptor: p, thisValue: n, prototype: l };
   };
   var createHandlerContext = (e, r) => {
-    const { trapName: t, handler: a, traps: o, root: s, path: c } = e, { target: p, name: n, val: l, receiver: d, args: i, descriptor: h, thisValue: y, prototype: u } = parseParameters(t, r), g2 = trapsWithKey.includes(t) ? n : void 0;
-    return { parameters: r, target: p, name: n, val: l, args: i, descriptor: h, receiver: d, thisValue: y, prototype: u, trapName: t, traps: o, path: c, handler: a, key: g2, newValue: "set" === t ? l : void 0, root: s, get proxy() {
+    const { trapName: t, handler: a, traps: o, root: s, path: c } = e, { target: p, name: n, val: l, receiver: d, args: i, descriptor: h, thisValue: y, prototype: u } = parseParameters(t, r), g4 = trapsWithKey.includes(t) ? n : void 0;
+    return { parameters: r, target: p, name: n, val: l, args: i, descriptor: h, receiver: d, thisValue: y, prototype: u, trapName: t, traps: o, path: c, handler: a, key: g4, newValue: "set" === t ? l : void 0, root: s, get proxy() {
       return getFromCache(s, p, c);
     }, get value() {
-      return g2 && p[g2];
-    }, DEFAULT, PROXY: createDeepProxy.bind({ root: s, handler: a, path: [...c, g2] }) };
+      return g4 && p[g4];
+    }, DEFAULT, PROXY: createDeepProxy.bind({ root: s, handler: a, path: [...c, g4] }) };
   };
   var trap = function(...e) {
     const { trapName: r, handler: t } = this, a = createHandlerContext(this, e), { PROXY: o, DEFAULT: s } = a, c = t(a);
@@ -55904,6 +55970,7 @@ ${import_chalk2.default.magenta("Installing")} deps:
   // pkgs/base/pkgs/rpc/src/config.ts
   var import_fs4 = __require("fs");
   var import_path4 = __require("path");
+  init_export();
   var config = new Proxy(
     {
       _path: "",
@@ -56401,6 +56468,7 @@ Make sure to kill running instance before starting.
   });
 
   // pkgs/base/pkgs/bundler/bundle.ts
+  init_export();
   var import_esbuild = __require("esbuild");
   var import_fs_jetpack3 = __toESM(require_main());
   var import_lodash3 = __toESM(require_lodash());
@@ -56475,8 +56543,8 @@ Make sure to kill running instance before starting.
             ...plugins || [],
             {
               name: "root",
-              setup(build) {
-                build.onStart(async () => {
+              setup(build2) {
+                build2.onStart(async () => {
                   if (isRebuild) {
                     t0 = performance.now();
                   }
@@ -56484,7 +56552,7 @@ Make sure to kill running instance before starting.
                     await event.onStart({ isRebuild });
                   }
                 });
-                build.onEnd(async () => {
+                build2.onEnd(async () => {
                   if (event && event.onEnd) {
                     if (isRebuild && tstart !== false && print) {
                       console.log(
@@ -56531,8 +56599,12 @@ Make sure to kill running instance before starting.
     }
   };
 
+  // pkgs/base/src/builder/service-main.ts
+  init_export();
+
   // pkgs/base/pkgs/bundler/watch.ts
   var import_watcher = __require("@parcel/watcher");
+  init_export();
   var import_path6 = __require("path");
   var watcher = {
     _watches: {},
@@ -56591,6 +56663,7 @@ Make sure to kill running instance before starting.
   };
 
   // pkgs/base/src/watcher/watch-service.ts
+  init_export();
   var watchService = (name, event) => {
     watcher.watch({
       dir: dir.root(`app/${name}`),
@@ -56599,22 +56672,28 @@ Make sure to kill running instance before starting.
   };
 
   // pkgs/base/src/builder/service-module.ts
+  init_export();
   var import_fs_jetpack16 = __toESM(require_main());
 
   // pkgs/base/src/builder/service/prepare/db.ts
+  init_export();
   var import_fs_jetpack8 = __toESM(require_main());
 
   // pkgs/service/pkgs/service-db/src/create-db.ts
+  init_export();
   var import_fs_jetpack7 = __toESM(require_main());
   var import_lodash5 = __toESM(require_lodash());
 
   // pkgs/service/export.ts
   var import_catch_exit = __toESM(require_dist());
+  init_export();
 
   // pkgs/service/src/action.ts
+  init_export();
   var import_lodash4 = __toESM(require_lodash2());
 
   // pkgs/service/src/global.ts
+  init_export();
   var svc = globalize({
     name: "svc",
     value: {
@@ -56622,13 +56701,17 @@ Make sure to kill running instance before starting.
       definitions: {}
       // action definition
     },
-    init: (g2) => __async(void 0, null, function* () {
-      g2.root = yield connectRPC("root");
+    init: (g4) => __async(void 0, null, function* () {
+      g4.root = yield connectRPC("root");
     })
   });
 
   // pkgs/service/src/create-service.ts
+  init_export();
   var import_fs_jetpack4 = __toESM(require_main());
+
+  // pkgs/service/src/service-module.ts
+  init_export();
 
   // pkgs/service/export.ts
   var manageProcess = (name, pid) => {
@@ -56718,6 +56801,7 @@ Make sure to kill running instance before starting.
 
   // pkgs/service/pkgs/service-db/src/ensure-prisma.ts
   var import_prisma_ast = __toESM(require_dist2());
+  init_export();
   var import_fs_jetpack5 = __toESM(require_main());
   var import_path7 = __require("path");
   var fixPrismaName = (path4) => __async(void 0, null, function* () {
@@ -56837,11 +56921,13 @@ datasource db {
   });
 
   // pkgs/base/src/builder/service/prepare/srv.ts
+  init_export();
   var import_fs_jetpack10 = __toESM(require_main());
   var import_promises2 = __require("fs/promises");
   var import_path10 = __require("path");
 
   // pkgs/base/src/scaffold/srv/api.ts
+  init_export();
   var import_fs_jetpack9 = __toESM(require_main());
   var import_path9 = __require("path");
 
@@ -58321,11 +58407,13 @@ export const _ = {
   });
 
   // pkgs/base/src/builder/service/prepare/web.ts
+  init_export();
   var import_fs_jetpack15 = __toESM(require_main());
   var import_promises4 = __require("fs/promises");
   var import_path14 = __require("path");
 
   // pkgs/base/src/scaffold/web/layout.ts
+  init_export();
   var import_fs_jetpack11 = __toESM(require_main());
   var import_path11 = __require("path");
   var scan2 = (path4) => __async(void 0, null, function* () {
@@ -58364,6 +58452,7 @@ ${parsed.map((e) => {
   });
 
   // pkgs/base/src/scaffold/web/page.ts
+  init_export();
   var import_fs_jetpack12 = __toESM(require_main());
   var import_path12 = __require("path");
   var scan3 = (path4) => __async(void 0, null, function* () {
@@ -58437,6 +58526,7 @@ ${parsed.map((e) => {
   });
 
   // pkgs/base/src/scaffold/web/ssr.ts
+  init_export();
   var import_fs_jetpack13 = __toESM(require_main());
   var import_path13 = __require("path");
   var scan4 = (path4) => __async(void 0, null, function* () {
@@ -58487,6 +58577,7 @@ ${parsed.map((e) => {
   });
 
   // pkgs/base/src/scaffold/web/web.ts
+  init_export();
   var import_fs_jetpack14 = __toESM(require_main());
   var import_promises3 = __require("fs/promises");
   var scaffoldWeb = () => __async(void 0, null, function* () {
@@ -58680,7 +58771,9 @@ export default page({
   };
 
   // pkgs/base/src/builder/build-app.ts
-  var import_fs_jetpack17 = __toESM(require_main());
+  init_export();
+  var import_fs_jetpack18 = __toESM(require_main());
+  var g2 = global;
   var buildMainApp = (app) => __async(void 0, null, function* () {
     yield bundle({
       input: app.input,
@@ -58691,8 +58784,8 @@ export default page({
         output: dir.root(".output/app/package.json")
       }
     });
-    const src = yield (0, import_fs_jetpack17.readAsync)(app.output, "utf8");
-    yield (0, import_fs_jetpack17.writeAsync)(
+    const src = yield (0, import_fs_jetpack18.readAsync)(app.output, "utf8");
+    yield (0, import_fs_jetpack18.writeAsync)(
       app.output,
       `/*
 \u2584\u2584\u2584         \u2584\xB7 \u2584\u258C \u2584\u2584\u2584\xB7 \u2584\u2584\u258C
@@ -58715,14 +58808,23 @@ export default page({
 ${src}
 })()`
     );
+    if (yield (0, import_fs_jetpack18.existsAsync)(dir.root("app/build.ts"))) {
+      try {
+        const res = yield Promise.resolve().then(() => (init_build(), build_exports));
+        g2.afterBuild = yield res.build(baseGlobal.mode);
+      } catch (e) {
+        console.error("Failed to run app/build.ts", e);
+      }
+    }
   });
 
   // pkgs/base/src/builder/service/postrun/web.ts
-  var import_child_process3 = __require("child_process");
-  var import_fs_jetpack18 = __toESM(require_main());
+  var import_child_process4 = __require("child_process");
+  init_export();
+  var import_fs_jetpack19 = __toESM(require_main());
   var import_path15 = __require("path");
   var postRunWeb = (name) => __async(void 0, null, function* () {
-    const src = yield (0, import_fs_jetpack18.readAsync)(dir.root(`app/${name}/main.ts`), "utf8");
+    const src = yield (0, import_fs_jetpack19.readAsync)(dir.root(`app/${name}/main.ts`), "utf8");
     let entry = "";
     if (src) {
       yield traverse(src, (parent) => ({
@@ -58737,7 +58839,7 @@ ${src}
       }));
     }
     if (entry) {
-      yield (0, import_fs_jetpack18.removeAsync)(dir.root(`.output/app/${name}/public`));
+      yield (0, import_fs_jetpack19.removeAsync)(dir.root(`.output/app/${name}/public`));
       const args2 = [
         (0, import_path15.join)(..."node_modules/parcel/lib/bin.js".split("/")),
         baseGlobal.mode === "dev" ? "watch" : "build",
@@ -58746,7 +58848,7 @@ ${src}
         "--dist-dir",
         dir.root(`.output/app/${name}/public`)
       ].filter((e) => e);
-      const parcel = (0, import_child_process3.spawn)("node", args2, {
+      const parcel = (0, import_child_process4.spawn)("node", args2, {
         cwd: dir.root(`app/${name}`),
         stdio: ["ignore", "inherit", "inherit"]
       });
@@ -58803,7 +58905,8 @@ ${src}
   };
 
   // pkgs/base/src/commit-hook.ts
-  var import_fs_jetpack19 = __toESM(require_main());
+  init_export();
+  var import_fs_jetpack20 = __toESM(require_main());
 
   // node_modules/.pnpm/execa@7.1.1/node_modules/execa/index.js
   var import_node_buffer2 = __require("node:buffer");
@@ -59934,7 +60037,7 @@ ${error.message}` : execaMessage;
   // pkgs/base/src/commit-hook.ts
   var commitHook = (args2) => __async(void 0, null, function* () {
     const isMainRepo = () => __async(void 0, null, function* () {
-      const conf = yield (0, import_fs_jetpack19.readAsync)(dir.root(".git/config"), "utf8");
+      const conf = yield (0, import_fs_jetpack20.readAsync)(dir.root(".git/config"), "utf8");
       if (conf == null ? void 0 : conf.includes("url = https://github.com/avolut/royal")) {
         return true;
       }
@@ -59942,19 +60045,19 @@ ${error.message}` : execaMessage;
     });
     if (args2.includes("pre-commit")) {
       if (yield isMainRepo()) {
-        if (!(yield (0, import_fs_jetpack19.existsAsync)(dir.root(".husky/_/husky.sh")))) {
+        if (!(yield (0, import_fs_jetpack20.existsAsync)(dir.root(".husky/_/husky.sh")))) {
           yield $`pnpm husky install`;
         }
-        yield (0, import_fs_jetpack19.writeAsync)(dir.root(".output/.commit"), "");
+        yield (0, import_fs_jetpack20.writeAsync)(dir.root(".output/.commit"), "");
       }
       process.exit(1);
       return true;
     }
     if (args2.includes("post-commit")) {
       if (yield isMainRepo()) {
-        if (yield (0, import_fs_jetpack19.existsAsync)(dir.root(".output/.commit"))) {
-          yield (0, import_fs_jetpack19.removeAsync)(dir.root(".output/.commit"));
-          yield (0, import_fs_jetpack19.writeAsync)(dir.root("pkgs/version.json"), { ts: Date.now() });
+        if (yield (0, import_fs_jetpack20.existsAsync)(dir.root(".output/.commit"))) {
+          yield (0, import_fs_jetpack20.removeAsync)(dir.root(".output/.commit"));
+          yield (0, import_fs_jetpack20.writeAsync)(dir.root("pkgs/version.json"), { ts: Date.now() });
           yield $`git add .pkgs/version.json`;
           yield $`git commit --ammend -C HEAD --no-verify`;
         }
@@ -59966,23 +60069,25 @@ ${error.message}` : execaMessage;
   });
 
   // pkgs/base/src/scaffold/app.ts
+  init_export();
   var import_fs5 = __require("fs");
-  var import_fs_jetpack21 = __toESM(require_main());
+  var import_fs_jetpack22 = __toESM(require_main());
 
   // pkgs/base/src/appgen/service.ts
-  var import_fs_jetpack20 = __toESM(require_main());
+  init_export();
+  var import_fs_jetpack21 = __toESM(require_main());
   var import_promises5 = __require("fs/promises");
   var serviceGen = () => __async(void 0, null, function* () {
     const names = [];
     const actions = [];
     for (const f of yield (0, import_promises5.readdir)(dir.root("app"))) {
       const s = yield (0, import_promises5.stat)(dir.root(`app/${f}`));
-      if (s.isDirectory() && (yield (0, import_fs_jetpack20.existsAsync)(dir.root(`app/${f}/main.ts`)))) {
+      if (s.isDirectory() && (yield (0, import_fs_jetpack21.existsAsync)(dir.root(`app/${f}/main.ts`)))) {
         names.push(f);
         if (f.startsWith("web") || f.startsWith("db") || f.startsWith("srv")) {
           actions.push({ type: "single", name: f });
         } else {
-          const src = yield (0, import_fs_jetpack20.readAsync)(dir.root(`app/${f}/main.ts`), "utf8");
+          const src = yield (0, import_fs_jetpack21.readAsync)(dir.root(`app/${f}/main.ts`), "utf8");
           if (src) {
             yield traverse(src, (parent) => ({
               visitObjectExpression(n) {
@@ -59998,7 +60103,7 @@ ${error.message}` : execaMessage;
         }
       }
     }
-    yield (0, import_fs_jetpack20.writeAsync)(
+    yield (0, import_fs_jetpack21.writeAsync)(
       dir.root(`app/gen/service/actions.d.ts`),
       `${actions.map((e) => {
         return `import { main as ${e.name}_action } from "../../${e.name}/main";`;
@@ -60014,7 +60119,7 @@ ${actions.map((e) => {
 }
 `
     );
-    yield (0, import_fs_jetpack20.writeAsync)(
+    yield (0, import_fs_jetpack21.writeAsync)(
       dir.root(`app/gen/service/name.ts`),
       `export type SERVICE_NAME = "${names.join(`" | "`)}";`
     );
@@ -60022,7 +60127,7 @@ ${actions.map((e) => {
 
   // pkgs/base/src/scaffold/app.ts
   var prepareApp = () => __async(void 0, null, function* () {
-    yield (0, import_fs_jetpack21.writeAsync)(
+    yield (0, import_fs_jetpack22.writeAsync)(
       dir.path(".output/app/pnpm-workspace.yaml"),
       `packages:
   - ./*`
@@ -60042,7 +60147,8 @@ ${actions.map((e) => {
   });
 
   // pkgs/base/src/upgrade.ts
-  var import_child_process4 = __require("child_process");
+  var import_child_process5 = __require("child_process");
+  init_export();
 
   // node_modules/.pnpm/fflate@0.7.4/node_modules/fflate/esm/index.mjs
   var import_module = __require("module");
@@ -60513,13 +60619,13 @@ ${actions.map((e) => {
 
   // pkgs/base/src/upgrade.ts
   var import_fs6 = __require("fs");
-  var import_fs_jetpack22 = __toESM(require_main());
+  var import_fs_jetpack23 = __toESM(require_main());
   var import_path16 = __require("path");
   var upgradeHook = (args2) => __async(void 0, null, function* () {
     if (args2.includes("upgrade")) {
       const backupDir = dir.root(".output/upgrade/backup");
-      yield (0, import_fs_jetpack22.removeAsync)(dir.root(".output/upgrade"));
-      yield (0, import_fs_jetpack22.dirAsync)(backupDir);
+      yield (0, import_fs_jetpack23.removeAsync)(dir.root(".output/upgrade"));
+      yield (0, import_fs_jetpack23.dirAsync)(backupDir);
       console.log(`Upgrading Base Framework`);
       console.log(` > Downloading upgrade zip`);
       const downloadURI = `https://github.com/avolut/royal/archive/refs/heads/main.zip`;
@@ -60527,13 +60633,13 @@ ${actions.map((e) => {
       const ab = yield res.arrayBuffer();
       console.log(` > Extracting: .output/upgrade/royal`);
       const uzi = unzipSync(new Uint8Array(ab));
-      yield (0, import_fs_jetpack22.dirAsync)(dir.root(".output/upgrade/royal-main"));
+      yield (0, import_fs_jetpack23.dirAsync)(dir.root(".output/upgrade/royal-main"));
       yield Promise.all(
         Object.entries(uzi).map((_0) => __async(void 0, [_0], function* ([filename, buf]) {
           if (buf.length === 0) {
-            yield (0, import_fs_jetpack22.dirAsync)(dir.root(`.output/upgrade/${filename}`));
+            yield (0, import_fs_jetpack23.dirAsync)(dir.root(`.output/upgrade/${filename}`));
           } else {
-            yield (0, import_fs_jetpack22.writeAsync)(
+            yield (0, import_fs_jetpack23.writeAsync)(
               dir.root(`.output/upgrade/${filename}`),
               Buffer.from(buf)
             );
@@ -60544,8 +60650,8 @@ ${actions.map((e) => {
       const root2 = dir.root("");
       for (const f of (0, import_fs6.readdirSync)(dir.root(""))) {
         if (f !== "app" && f !== ".output" && f !== ".husky" && f !== ".git") {
-          if (yield (0, import_fs_jetpack22.existsAsync)((0, import_path16.join)(root2, `.output/upgrade/backup/${f}`))) {
-            yield (0, import_fs_jetpack22.moveAsync)(
+          if (yield (0, import_fs_jetpack23.existsAsync)((0, import_path16.join)(root2, `.output/upgrade/backup/${f}`))) {
+            yield (0, import_fs_jetpack23.moveAsync)(
               (0, import_path16.join)(root2, f),
               (0, import_path16.join)(root2, `.output/upgrade/backup/${f}`)
             );
@@ -60555,7 +60661,7 @@ ${actions.map((e) => {
       console.log(` > Applying upgrade`);
       for (const f of (0, import_fs6.readdirSync)((0, import_path16.join)(root2, ".output/upgrade/royal-main"))) {
         if (f !== "app" && f !== ".output" && f !== "." && f !== ".." && f !== ".husky" && f !== ".git") {
-          yield (0, import_fs_jetpack22.copyAsync)(
+          yield (0, import_fs_jetpack23.copyAsync)(
             (0, import_path16.join)(root2, `.output/upgrade/royal-main/${f}`),
             (0, import_path16.join)(root2, f),
             {
@@ -60564,7 +60670,7 @@ ${actions.map((e) => {
           );
         }
       }
-      (0, import_child_process4.spawnSync)("pnpm", ["i"], { cwd: dir.root(""), stdio: "inherit" });
+      (0, import_child_process5.spawnSync)("pnpm", ["i"], { cwd: dir.root(""), stdio: "inherit" });
       if (process.send) {
         process.send("exit");
       } else {
@@ -60577,9 +60683,10 @@ ${actions.map((e) => {
 
   // pkgs/base/src/version-check.ts
   var import_date_fns = __toESM(require_date_fns());
-  var import_fs_jetpack23 = __toESM(require_main());
+  init_export();
+  var import_fs_jetpack24 = __toESM(require_main());
   var versionCheck = (opt) => __async(void 0, null, function* () {
-    const version = yield (0, import_fs_jetpack23.readAsync)(dir.root("pkgs/version.json"), "json");
+    const version = yield (0, import_fs_jetpack24.readAsync)(dir.root("pkgs/version.json"), "json");
     let timeout = {
       timer: null
     };
@@ -60610,18 +60717,19 @@ If somehow upgrade failed you can rollback using
   });
 
   // pkgs/base/src/vscode.ts
-  var import_fs_jetpack24 = __toESM(require_main());
+  init_export();
+  var import_fs_jetpack25 = __toESM(require_main());
   var import_path17 = __require("path");
   var vscodeSettings = () => __async(void 0, null, function* () {
     const vscodeFile = dir.path(".vscode/settings.json");
     const source = JSON.stringify(defaultVsSettings, null, 2);
-    if (yield (0, import_fs_jetpack24.existsAsync)(vscodeFile)) {
-      if ((yield (0, import_fs_jetpack24.readAsync)(vscodeFile, "utf8")) === source) {
+    if (yield (0, import_fs_jetpack25.existsAsync)(vscodeFile)) {
+      if ((yield (0, import_fs_jetpack25.readAsync)(vscodeFile, "utf8")) === source) {
         return;
       }
     }
-    yield (0, import_fs_jetpack24.dirAsync)((0, import_path17.dirname)(vscodeFile));
-    yield (0, import_fs_jetpack24.writeAsync)(vscodeFile, source);
+    yield (0, import_fs_jetpack25.dirAsync)((0, import_path17.dirname)(vscodeFile));
+    yield (0, import_fs_jetpack25.writeAsync)(vscodeFile, source);
   });
   var defaultVsSettings = {
     "typescript.preferences.importModuleSpecifier": "relative",
@@ -60661,7 +60769,8 @@ If somehow upgrade failed you can rollback using
   };
 
   // pkgs/base/src/watcher/new-service.ts
-  var import_fs_jetpack25 = __toESM(require_main());
+  init_export();
+  var import_fs_jetpack26 = __toESM(require_main());
   var import_promises6 = __require("fs/promises");
   var import_path18 = __require("path");
   var watchNewService = () => {
@@ -60678,7 +60787,7 @@ If somehow upgrade failed you can rollback using
             }
             if (c.type === "delete") {
               console.log(`Removing service: ${source_default.red(name)}`);
-              yield (0, import_fs_jetpack25.removeAsync)(dir.root(`.output/app/${name}`));
+              yield (0, import_fs_jetpack26.removeAsync)(dir.root(`.output/app/${name}`));
               yield serviceGen();
               process.exit(99);
             } else if (c.type === "create") {
@@ -60697,12 +60806,12 @@ If somehow upgrade failed you can rollback using
                     const fpath = dir.root(`${root2}/${f}`);
                     const s2 = yield (0, import_promises6.stat)(fpath);
                     if (s2.isDirectory()) {
-                      yield (0, import_fs_jetpack25.copyAsync)(fpath, (0, import_path18.join)(c.path, f), {
+                      yield (0, import_fs_jetpack26.copyAsync)(fpath, (0, import_path18.join)(c.path, f), {
                         overwrite: true
                       });
                     } else {
-                      const src = yield (0, import_fs_jetpack25.readAsync)(fpath, "utf8");
-                      yield (0, import_fs_jetpack25.writeAsync)(
+                      const src = yield (0, import_fs_jetpack26.readAsync)(fpath, "utf8");
+                      yield (0, import_fs_jetpack26.writeAsync)(
                         (0, import_path18.join)(c.path, f),
                         (src || "").replace(/template_service/g, name)
                       );
@@ -60723,35 +60832,8 @@ If somehow upgrade failed you can rollback using
     });
   };
 
-  // pkgs/base/src/builder/prasi-plugin.ts
-  var import_fs_jetpack26 = __toESM(require_main());
-  var import_path19 = __require("path");
-  var import_child_process5 = __require("child_process");
-  var buildPrasiPlugin = () => __async(void 0, null, function* () {
-    const entry = dir.root("pkgs/service/pkgs/service-web/pkgs/prasi/plugin.tsx");
-    yield (0, import_fs_jetpack26.removeAsync)(dir.root(".output/app/srv/prasi"));
-    const args2 = [
-      (0, import_path19.join)(..."node_modules/parcel/lib/bin.js".split("/")),
-      baseGlobal.mode === "dev" ? "watch" : "build",
-      entry,
-      baseGlobal.mode === "dev" ? "--no-hmr" : "--no-optimize",
-      "--dist-dir",
-      dir.root(".output/app/srv/prasi")
-    ].filter((e) => e);
-    const parcel = (0, import_child_process5.spawn)("node", args2, {
-      cwd: dir.root(`pkgs/service/pkgs/service-web/pkgs/prasi/`),
-      stdio: ["ignore", "inherit", "inherit"]
-    });
-    if (baseGlobal.mode === "dev") {
-      baseGlobal.parcels.add(parcel);
-    } else {
-      yield new Promise((resolve) => {
-        parcel.on("exit", resolve);
-      });
-    }
-  });
-
   // pkgs/base/src/main.ts
+  var g3 = global;
   var args = process.argv.slice(2);
   var baseMain = () => __async(void 0, null, function* () {
     process.removeAllListeners("warning");
@@ -60769,7 +60851,7 @@ If somehow upgrade failed you can rollback using
       const dirs = yield scanDir([dir.root()]);
       yield (0, import_fs_jetpack27.removeAsync)(dir.root(".output"));
       yield Promise.all(
-        dirs.map((e) => (0, import_fs_jetpack27.removeAsync)((0, import_path20.join)((0, import_path20.dirname)(e), "node_modules")))
+        dirs.map((e) => (0, import_fs_jetpack27.removeAsync)((0, import_path19.join)((0, import_path19.dirname)(e), "node_modules")))
       );
       yield (0, import_fs_jetpack27.removeAsync)(dir.root("node_modules"));
       return;
@@ -60796,9 +60878,6 @@ If somehow upgrade failed you can rollback using
           })
         )
       );
-      if (app.serviceNames.includes("web") && app.serviceNames.includes("srv")) {
-        yield buildPrasiPlugin();
-      }
       yield Promise.all(app.serviceNames.map((e) => __async(void 0, null, function* () {
         return yield postRun(e);
       })));
@@ -60835,8 +60914,8 @@ Build done: ${source_default.green(`.output/app`)}`);
           })
         )
       );
-      if (app.serviceNames.includes("web") && app.serviceNames.includes("srv")) {
-        yield buildPrasiPlugin();
+      if (g3.afterBuild) {
+        yield g3.afterBuild();
       }
       versionCheck({ timeout: 3e3 });
       yield runner.run({

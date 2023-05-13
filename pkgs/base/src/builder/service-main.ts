@@ -59,6 +59,9 @@ export const buildServiceMain = async (
       : undefined,
   });
 
+
+
+
   watchService(name, async (err, changes) => {
     if (!err) {
       for (const c of changes) {

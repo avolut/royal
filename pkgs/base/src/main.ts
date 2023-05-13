@@ -6,7 +6,6 @@ import padEnd from "lodash.padend";
 import { dirname, join } from "path";
 import { pkg, scanDir } from "pkg";
 import { connectRPC, createRPC } from "rpc";
-import { zip } from "zip-a-folder";
 import { rootAction as RootAction } from "../../service/src/action";
 import { action, baseGlobal } from "./action";
 import { buildMainApp } from "./builder/build-app";
@@ -20,7 +19,10 @@ import { upgradeHook } from "./upgrade";
 import { versionCheck } from "./version-check";
 import { vscodeSettings } from "./vscode";
 import { watchNewService } from "./watcher/new-service";
-import { buildPrasiPlugin } from "./builder/prasi-plugin";
+
+const g = global as unknown as {
+  afterBuild?: () => Promise<void>;
+};
 
 const args = process.argv.slice(2);
 
@@ -76,9 +78,6 @@ export const baseMain = async () => {
       )
     );
 
-    if (app.serviceNames.includes("web") && app.serviceNames.includes("srv")) {
-      await buildPrasiPlugin();
-    }
     await Promise.all(app.serviceNames.map(async (e) => await postRun(e)));
     // await zip(dir.root(".output/app"), dir.root(".output/app.zip"));
 
@@ -114,8 +113,8 @@ export const baseMain = async () => {
       )
     );
 
-    if (app.serviceNames.includes("web") && app.serviceNames.includes("srv")) {
-      await buildPrasiPlugin();
+    if (g.afterBuild) {
+      await g.afterBuild();
     }
 
     versionCheck({ timeout: 3000 });

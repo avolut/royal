@@ -91,13 +91,19 @@ export const fetchSendDb = async (
   }
   if (!w.frmapi) {
     w.frmapi = {};
-    w.frmapi[w.serverurl] = await createFrameCors(dburl || w.serverurl);
   }
-  frm = w.frmapi[w.serverurl];
+
+  const _base = dburl || w.serverurl;
+
+  if (!w.frmapi[_base]) {
+    w.frmapi[_base] = await createFrameCors(_base);
+  }
+
+  frm = w.frmapi[_base];
 
   if (!frm) {
     await waitUntil(() => {
-      frm = w.frmapi[w.serverurl];
+      frm = w.frmapi[_base];
       return frm;
     });
   }
