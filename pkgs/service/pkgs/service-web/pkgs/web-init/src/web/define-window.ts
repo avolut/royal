@@ -45,8 +45,10 @@ export const defineWindow = async () => {
     "../../../../../../../../app/gen/srv/api/entry-args"
   );
   w.db = dbClient("db");
+  w.dbClient = dbClient;
   w.apiEntry = (apiEntry as any)["srv"];
   w.api = apiClient(w.apiEntry);
+  w.apiClient = apiClient;
   w.navigate = (href: string) => {
     let _href = href;
 

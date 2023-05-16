@@ -78,6 +78,10 @@ export const baseMain = async () => {
       )
     );
 
+    if (g.afterBuild) {
+      await g.afterBuild();
+    }
+
     await Promise.all(app.serviceNames.map(async (e) => await postRun(e)));
     // await zip(dir.root(".output/app"), dir.root(".output/app.zip"));
 

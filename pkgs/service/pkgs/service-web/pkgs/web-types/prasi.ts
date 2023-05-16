@@ -21,6 +21,6 @@ export type PrasiEditorArg = {
 export type InitPrasiArg = {
   id: string;
   inject: {};
-  page?: () => Promise<void>;
+  page?: (config: any) => Promise<void>;
   editor?: (arg: PrasiEditorArg) => Promise<PrasiEditorPlugin>;
 };

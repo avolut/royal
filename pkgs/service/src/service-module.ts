@@ -11,6 +11,7 @@ export const serviceModule = <T extends { load: () => void }>({
   mode: "dev" | "staging" | "prod";
 }): T => {
   const rawpath = dir.path(`${name}/module.js`);
+
   if (existsSync(rawpath)) {
     const path = require.resolve(rawpath);
     const result = {
@@ -24,7 +25,7 @@ export const serviceModule = <T extends { load: () => void }>({
         result.import.load = load;
       }
 
-      return result.import;
+      return result.import; 
     };
 
     return load();
